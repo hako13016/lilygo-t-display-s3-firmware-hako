@@ -5,17 +5,26 @@
     <title>FEATURES | HAKO SENTINEL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --cyan: #00e5ff; --yellow: #ffff00; --bg: #050505; }
+        :root { --cyan: #00e5ff; --yellow: #ffff00; --bg: #050505; --magenta: #ff00ff; }
         body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 40px; display: flex; flex-direction: column; align-items: center; }
         .card { background: #111; border: 1px solid var(--yellow); padding: 25px; border-radius: 20px; width: 100%; max-width: 600px; margin-bottom: 20px; }
         h2 { color: var(--cyan); margin-top: 0; }
         .highlight { color: var(--yellow); font-weight: bold; }
         .back-btn { color: var(--cyan); text-decoration: none; margin-bottom: 30px; display: block; }
+        
+        /* Changelog style */
+        .update-header { border-left: 4px solid var(--magenta); padding-left: 15px; margin-bottom: 30px; width: 100%; max-width: 600px; }
+        #click-stats-info { color: var(--magenta); font-family: monospace; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
     <a href="index.html" class="back-btn">← Back to Home</a>
-    <h1>System Details</h1>
+    
+    <div class="update-header">
+        <h1 style="margin:0;">System Details</h1>
+        <p style="color: var(--yellow); margin: 5px 0;">LAST UPDATE: <span id="current-date">January 06, 2026</span></p>
+        <div id="click-stats-info">[SYSTEM] FETCHING GLOBAL STATS...</div>
+    </div>
 
     <div class="card">
         <h2>🛡️ Sentinel Intelligence</h2>
@@ -34,11 +43,39 @@
 
     <div class="card">
         <h2>🎭 Full Customization</h2>
-        <p>Thanks to the built-in menu (long press on button 14), you can change themes in real-time. The system is designed to support up to <span class="highlight">10 different characters</span> with their own size settings.</p>
+        <p>Thanks to the built-in menu (long press on button 14), you can change themes in real-time. <span class="highlight">I will add new characters with each update</span>, up to 10 different ones with their own specific size and animation settings.</p>
+    </div>
+
+    <div class="card" style="border-color: var(--magenta);">
+        <h2 style="color: var(--magenta);">🚀 What's New Today?</h2>
+        <p>Animation system update and detection engine optimization:</p>
+        <ul style="color: #ccc;">
+            <li>Correction of character positioning.</li>
+            <li>Improved smoothness of image transitions.</li>
+        </ul>
     </div>
 
     <div style="text-align: center; color: var(--yellow); margin-top: 30px;">
         <i class="fas fa-tools"></i> NEXT UPDATE: BLUETOOTH SNIFFER & RECON
     </div>
+
+    <script>
+        // --- FETCH FLASH BUTTON STATS ---
+        const get_url_info = "https://api.countapi.xyz/get/hako-sentinel-v1/flash_clicks";
+
+        function updateStats() {
+            fetch(get_url_info)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('click-stats-info').innerText = "[SYSTEM] GLOBAL DEPLOYMENTS: " + data.value;
+                })
+                .catch(() => {
+                    document.getElementById('click-stats-info').innerText = "[SYSTEM] ONLINE STATISTICS";
+                });
+        }
+
+        // Auto launch stats
+        window.onload = updateStats;
+    </script>
 </body>
 </html>

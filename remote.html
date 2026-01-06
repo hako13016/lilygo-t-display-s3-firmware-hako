@@ -6,10 +6,13 @@
     <title>HAKO REMOTE S3</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --theme: #ff00ff; --bg: #050505; }
+        :root { --theme: #ff00ff; --bg: #050505; --cyan: #00e5ff; --yellow: #ffff00; }
         body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
         
-        .remote-container { border: 2px solid var(--theme); background: rgba(0,0,0,0.9); width: 92%; max-width: 450px; border-radius: 30px; box-shadow: 0 0 30px var(--theme); padding: 25px; display: flex; flex-direction: column; align-items: center; transition: 0.3s; }
+        /* Bouton retour */
+        .back-home { position: absolute; top: 20px; left: 20px; color: var(--cyan); text-decoration: none; font-size: 0.9rem; border-bottom: 1px solid var(--cyan); }
+
+        .remote-container { border: 2px solid var(--theme); background: rgba(0,0,0,0.9); width: 92%; max-width: 450px; border-radius: 30px; box-shadow: 0 0 30px var(--theme); padding: 25px; display: flex; flex-direction: column; align-items: center; transition: 0.3s; z-index: 10; }
         
         .virtual-screen {
             width: 100%; height: 140px; background: #000; border: 3px solid var(--theme); border-radius: 15px;
@@ -27,12 +30,41 @@
         .ctrl-btn { width: 80px; height: 80px; background: #111; border: 2px solid var(--theme); color: var(--theme); border-radius: 20px; font-size: 1.8rem; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
         .ctrl-btn:active { transform: scale(0.9); background: var(--theme); color: #000; }
         .btn-ok { background: #fff; color: #000; border: none; font-size: 1.4rem; font-weight: bold; }
+
+        /* Style de la Pop-up Automatique (identique index) */
+        .modal-hako {
+            display: none; position: fixed; z-index: 9999;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+        }
+        .modal-content {
+            background: #111; border: 2px solid var(--yellow);
+            margin: 15% auto; padding: 30px; width: 85%; max-width: 400px;
+            text-align: center; border-radius: 20px; box-shadow: 0 0 30px var(--yellow);
+        }
+        .btn-close-modal {
+            background: var(--yellow); color: #000; border: none;
+            padding: 10px 30px; border-radius: 50px; font-weight: bold;
+            margin-top: 20px; cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
+    <div id="popup-update" class="modal-hako">
+        <div class="modal-content">
+            <h2 style="color: var(--yellow);">MODE REMOTE ACTIVÉ</h2>
+            <p style="color: #fff;">Dernière mise à jour système :</p>
+            <h3 style="color: var(--cyan);">06 Janvier 2026</h3>
+            <p style="font-size: 0.8rem; color: #888;">Connectez votre Lilygo en USB pour piloter l'interface.</p>
+            <button class="btn-close-modal" onclick="closeHakoPopup()">DÉMARRER</button>
+        </div>
+    </div>
+
+    <a href="index.html" class="back-home">← Retour à l'accueil</a>
+
     <div class="remote-container" id="main-box">
-        <h2 style="margin-top:0; letter-spacing: 3px;">HAKO S3</h2>
+        <h2 style="margin-top:0; letter-spacing: 3px; color: var(--theme);">HAKO S3</h2>
 
         <div class="virtual-screen" id="v-screen">
             <div id="screen-text">NON CONNECTÉ</div>
@@ -51,6 +83,15 @@
     </div>
 
     <script>
+        // --- GESTION DE LA POP-UP ---
+        window.onload = function() {
+            document.getElementById('popup-update').style.display = 'block';
+        };
+
+        function closeHakoPopup() {
+            document.getElementById('popup-update').style.display = 'none';
+        }
+
         let port, writer;
 
         async function initSerial() {
@@ -81,7 +122,6 @@
                         if (data.includes("TEXT:")) {
                             let msg = data.split("TEXT:")[1].split("\n")[0].trim();
                             document.getElementById('screen-text').innerText = msg;
-                            // Reset du pass si on change d'écran
                             if (!msg.includes("CAPTURE")) document.getElementById('captured-pass').innerText = "";
                         }
 
