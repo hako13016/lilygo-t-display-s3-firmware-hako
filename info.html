@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FEATURES | HAKO SENTINEL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --cyan: #00e5ff; --yellow: #ffff00; --bg: #050505; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 40px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: #111; border: 1px solid var(--yellow); padding: 25px; border-radius: 20px; width: 100%; max-width: 600px; margin-bottom: 20px; }
+        h2 { color: var(--cyan); margin-top: 0; }
+        .highlight { color: var(--yellow); font-weight: bold; }
+        .back-btn { color: var(--cyan); text-decoration: none; margin-bottom: 30px; display: block; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">← Back to Home</a>
+    <h1>System Details</h1>
+
+    <div class="card">
+        <h2>🛡️ Sentinel Intelligence</h2>
+        <p>The software constantly scans WiFi channels. If it detects a <span class="highlight">DEAUTH</span> or <span class="highlight">DISASSOC</span> type attack, it wakes up the screen and triggers the character animation.</p>
+    </div>
+
+    <div class="card">
+        <h2>🔋 Power Management</h2>
+        <p>Unlike other firmwares, HAKO SENTINEL:</p>
+        <ul>
+            <li>Lowers CPU frequency to <span class="highlight">80MHz</span> at rest.</li>
+            <li>Turns off or dims the backlight automatically after 60s.</li>
+            <li>Optimizes scan cycles to preserve battery life.</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>🎭 Full Customization</h2>
+        <p>Thanks to the built-in menu (long press on button 14), you can change themes in real-time. The system is designed to support up to <span class="highlight">10 different characters</span> with their own size settings.</p>
+    </div>
+
+    <div style="text-align: center; color: var(--yellow); margin-top: 30px;">
+        <i class="fas fa-tools"></i> NEXT UPDATE: BLUETOOTH SNIFFER & RECON
+    </div>
+</body>
+</html>

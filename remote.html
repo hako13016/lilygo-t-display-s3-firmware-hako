@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAKO REMOTE S3</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --theme: #ff00ff; --bg: #050505; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
+        
+        .remote-container { border: 2px solid var(--theme); background: rgba(0,0,0,0.9); width: 92%; max-width: 450px; border-radius: 30px; box-shadow: 0 0 30px var(--theme); padding: 25px; display: flex; flex-direction: column; align-items: center; transition: 0.3s; }
+        
+        .virtual-screen {
+            width: 100%; height: 140px; background: #000; border: 3px solid var(--theme); border-radius: 15px;
+            margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px; text-align: center; box-shadow: inset 0 0 15px rgba(255,255,255,0.05);
+        }
+
+        #screen-text { font-family: 'Courier New', monospace; font-size: 1.2rem; color: var(--theme); text-transform: uppercase; }
+        #captured-pass { color: #ff0000; font-weight: bold; font-size: 1.8rem; margin-top: 10px; text-shadow: 0 0 10px rgba(255,0,0,0.5); }
+
+        #status { margin-bottom: 20px; padding: 8px 20px; border-radius: 50px; border: 1px solid var(--theme); color: var(--theme); cursor: pointer; font-size: 0.9rem; }
+        #status.connected { background: var(--theme); color: #000; font-weight: bold; }
+
+        .d-pad { display: grid; grid-template-columns: repeat(3, 80px); grid-template-rows: repeat(3, 80px); gap: 12px; }
+        .ctrl-btn { width: 80px; height: 80px; background: #111; border: 2px solid var(--theme); color: var(--theme); border-radius: 20px; font-size: 1.8rem; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
+        .ctrl-btn:active { transform: scale(0.9); background: var(--theme); color: #000; }
+        .btn-ok { background: #fff; color: #000; border: none; font-size: 1.4rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="remote-container" id="main-box">
+        <h2 style="margin-top:0; letter-spacing: 3px;">HAKO S3</h2>
+
+        <div class="virtual-screen" id="v-screen">
+            <div id="screen-text">NON CONNECTÉ</div>
+            <div id="captured-pass"></div>
+        </div>
+
+        <div id="status" onclick="initSerial()"><i class="fas fa-plug"></i> CONNECTER USB</div>
+
+        <div class="d-pad">
+            <button class="ctrl-btn" style="grid-column: 2;" onclick="send('U')"><i class="fas fa-chevron-up"></i></button>
+            <button class="ctrl-btn" style="grid-column: 1; grid-row: 2;" onclick="send('L')"><i class="fas fa-chevron-left"></i></button>
+            <button class="ctrl-btn btn-ok" style="grid-column: 2; grid-row: 2;" onclick="send('S')">OK</button>
+            <button class="ctrl-btn" style="grid-column: 3; grid-row: 2;" onclick="send('R')"><i class="fas fa-chevron-right"></i></button>
+            <button class="ctrl-btn" style="grid-column: 2; grid-row: 3;" onclick="send('D')"><i class="fas fa-chevron-down"></i></button>
+        </div>
+    </div>
+
+    <script>
+        let port, writer;
+
+        async function initSerial() {
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                
+                const statusBtn = document.getElementById('status');
+                statusBtn.classList.add('connected');
+                statusBtn.innerHTML = "<i class='fas fa-link'></i> LILYGO CONNECTÉ";
+                
+                writer = port.writable.getWriter();
+                readLoop();
+            } catch (err) { alert("Erreur: " + err); }
+        }
+
+        async function readLoop() {
+            const decoder = new TextDecoder();
+            while (port.readable) {
+                const reader = port.readable.getReader();
+                try {
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        const data = decoder.decode(value);
+                        
+                        // --- GESTION DU TEXTE ---
+                        if (data.includes("TEXT:")) {
+                            let msg = data.split("TEXT:")[1].split("\n")[0].trim();
+                            document.getElementById('screen-text').innerText = msg;
+                            // Reset du pass si on change d'écran
+                            if (!msg.includes("CAPTURE")) document.getElementById('captured-pass').innerText = "";
+                        }
+
+                        // --- GESTION DE LA COULEUR ---
+                        if (data.includes("COLOR:")) {
+                            let hex = "#" + data.split("COLOR:")[1].trim().substring(0,6);
+                            document.documentElement.style.setProperty('--theme', hex);
+                        }
+
+                        // --- GESTION DU MOT DE PASSE ---
+                        if (data.includes("PASS:")) {
+                            let pass = data.split("PASS:")[1].trim();
+                            document.getElementById('screen-text').innerText = "MDP RÉCUPÉRÉ :";
+                            document.getElementById('captured-pass').innerText = pass;
+                        }
+                    }
+                } catch (err) { console.error(err); } finally { reader.releaseLock(); }
+            }
+        }
+
+        async function send(cmd) {
+            if (writer) {
+                const encoder = new TextEncoder();
+                await writer.write(encoder.encode(cmd));
+            }
+        }
+    </script>
+</body>
+</html>
