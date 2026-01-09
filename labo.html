@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAKO SENTINEL | FULL LABO LARGE</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+:root { --cyan: #00e5ff; --yellow: #ffff00; --magenta: #ff00ff; --bg: #050505; }
+body { background: var(--bg); color: var(--cyan); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+
+/* ================= POPUP ================= */
+.modal-hako {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
+  backdrop-filter: blur(8px); z-index: 9999;
+}
+.modal-content {
+  position: relative; background: #111; border: 2px solid var(--yellow);
+  margin: 10% auto; padding: 30px; width: 85%; max-width: 420px;
+  border-radius: 20px; box-shadow: 0 0 30px var(--yellow); text-align: center;
+  overflow: hidden;
+}
+.modal-content::after {
+  content: ""; position: absolute; inset: 0;
+  background: repeating-linear-gradient(to bottom,
+    rgba(255,255,255,.03) 0px,
+    rgba(255,255,255,.03) 1px,
+    transparent 2px, transparent 4px);
+  animation: scan 6s linear infinite; pointer-events: none;
+}
+@keyframes scan { from{background-position:0 0} to{background-position:0 100%} }
+
+#boot-title { color: var(--yellow); cursor: pointer; }
+.boot-log, .inject-log {
+  background:#000; color:#00ff41; font-family:monospace;
+  font-size:.75rem; height:120px; overflow-y:auto;
+  padding:10px; border:1px solid #333; margin:15px 0; text-align: left;
+}
+.usb-status { padding:8px; border-radius:8px; font-weight:bold; }
+.usb-status.warning { color:#ff5555; border:1px solid #ff5555; }
+.usb-status.ok { color:#00ff41; border:1px solid #00ff41; }
+.popup-info { font-size:.8rem; color:#aaa; margin-top:10px; }
+.btn-close-modal {
+  margin-top:20px; background:var(--yellow); color:#000;
+  border:none; padding:12px 35px; border-radius:50px;
+  font-weight:bold; cursor:pointer; box-shadow:0 0 15px var(--yellow);
+}
+.btn-close-modal.disabled { opacity:.4; cursor:not-allowed; }
+.expert-hint { font-size:.65rem; color:#555; margin-top:10px; }
+
+/* ================= SITE ================= */
+.hero { text-align: center; padding: 20px; width: 100%; }
+h1 { font-size: 3rem; margin: 0; text-transform: uppercase;
+  background: linear-gradient(to right, var(--yellow), var(--magenta));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.container { width: 98%; max-width: 1900px; padding-bottom: 150px; }
+
+.info-section { background: rgba(0,229,255,.05); border:1px dashed var(--cyan);
+  padding:20px; border-radius:15px; margin-bottom:30px; color:#fff; line-height:1.6;
+}
+.info-section h2 { color: var(--yellow); margin-top:0; text-transform:uppercase; }
+.step-link { color: var(--magenta); font-weight:bold; text-decoration:none; }
+.step-link:hover { text-decoration:underline; }
+.pro-tip { background:#222; padding:10px; border-left:4px solid var(--yellow); margin-top:10px; }
+
+.slot-section { background: rgba(255,255,255,.03); border:2px solid var(--cyan);
+  padding:20px; border-radius:15px; margin-bottom:40px; box-shadow:0 4px 15px rgba(0,229,255,.1);
+}
+.slot-title { color: var(--yellow); font-size:1.8rem; font-weight:bold;
+  border-bottom:3px solid var(--magenta); padding-bottom:10px; text-align:center; margin-bottom:20px;
+}
+.console-row { display:flex; gap:20px; justify-content:center; }
+.code-box { flex:1; }
+label { font-size:1rem; color:#fff; display:block; margin-bottom:10px; text-transform:uppercase; font-weight:bold; text-align:center; }
+textarea { background:#000; color:#00ff41; border:1px solid #444;
+  width:100%; height:400px; font-size:0.8rem; font-family:'Courier New', monospace; padding:15px; outline:none; resize:vertical;
+}
+
+.name-input-box { margin-bottom: 25px; text-align: center; border-bottom: 1px solid rgba(255,0,255,0.2); padding-bottom: 15px; }
+.name-input { background: #111; color: var(--yellow); border: 1px solid var(--magenta); padding: 10px; border-radius: 5px; text-align: center; font-weight: bold; text-transform: uppercase; width: 300px; font-size: 1rem; }
+
+.install-box { position:sticky; bottom:0; background: rgba(5,5,5,.95); width:100%; padding:25px; text-align:center; border-top:3px solid var(--magenta); z-index:100; }
+.btn-inject { background:var(--yellow); color:#000; padding:20px 80px; border-radius:50px; font-weight:bold; font-size:2rem; cursor:pointer; border:none; box-shadow:0 0 30px var(--yellow); text-transform:uppercase; }
+#status-msg { margin-top:15px; font-weight:bold; color:var(--cyan); font-size:1.2rem; }
+
+#site-locker{
+  position:fixed; inset:0; z-index:9998;
+  background: rgba(0,0,0,.95); display:flex; justify-content:center; align-items:center;
+  color:#ff5555; font-size:2rem; font-family:'Segoe UI',sans-serif;
+  text-align:center; pointer-events:auto;
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-btn" style="color: magenta; text-decoration: none; padding: 20px; display: block;">← Back to Home</a>
+
+<div id="popup-update" class="modal-hako">
+<div class="modal-content">
+<h2 id="boot-title">INITIALIZING HAKO LAB...</h2>
+<pre id="boot-log" class="boot-log"></pre>
+<div id="usb-status" class="usb-status warning">USB DEVICE: NOT DETECTED</div>
+<p class="popup-info">
+ HAKO LABO PRO This interface writes data directly to device firmware.
+</p>
+<button id="enter-btn" class="btn-close-modal disabled" onclick="closeHakoPopup()">USB REQUIRED</button>
+<div class="expert-hint">CTRL + CLICK TITLE FOR EXPERT MODE</div>
+</div>
+</div>
+
+<div id="modal-inject" class="modal-hako">
+<div class="modal-content">
+<h2 style="color:var(--cyan)">INJECTION IN PROGRESS...</h2>
+<pre id="inject-log" class="inject-log"></pre>
+<div id="finish-area" style="display:none">
+<h3 style="color:var(--yellow)">INJECTION TERMINÉE</h3>
+<button class="btn-close-modal" onclick="document.getElementById('modal-inject').style.display='none'">RETOUR</button>
+</div>
+</div>
+</div>
+
+<div id="site-locker">USB REQUIRED - CONNECT DEVICE TO ACCESS SITE</div>
+
+<div class="hero">
+<h1>HAKO LABO PRO</h1>
+<p style="color: var(--yellow);">INJECTION 150x150 | LARGE FORMAT</p>
+</div>
+
+<div class="container">
+<div class="info-section">
+  <h2><i class="fas fa-info-circle"></i> HOW TO CUSTOMIZE YOUR IMAGES</h2>
+  <ol>
+    <li><strong>Prepare:</strong> Download or create an image. Use <a href="https://www.photopea.com/" target="_blank" class="step-link">Photopea</a> to resize it (Square format 150x150 recommended).</li>
+    <li><strong>Remove Background:</strong> Go to <a href="https://www.remove.bg/" target="_blank" class="step-link">remove.bg</a> to clean your image background.</li>
+    <li><strong>Convert to Code:</strong> Use <a href="https://javl.github.io/image2cpp/" target="_blank" class="step-link">image2cpp</a> with these 100% reliable settings:
+      <ul>
+        <li><strong>Image Settings:</strong> Canvas size 150 x 150 | Background: <span style="color:var(--magenta)">Transparent</span></li>
+        <li><strong>Brightness / Alpha threshold:</strong> Adjust until you like the preview.</li>
+        <li><strong>Scaling:</strong> scale to fit, keep aspect ratio.</li>
+        <li><strong>Dithering:</strong> <span style="color:var(--magenta)">Atkinson</span> (for best quality).</li>
+      </ul>
+    </li>
+    <li><strong>Export:</strong> Select <span style="color:var(--magenta)">"Arduino Code"</span> as output format and click <strong>Generate Code</strong>.</li>
+    <li><strong>Custom Name:</strong> You can **rename your images as you want** in the name field of each slot before injecting.</li>
+  </ol>
+  <div class="pro-tip">
+    <strong><i class="fas fa-lightbulb"></i> PRO TIP:</strong> Just copy and paste the entire generated code! Our Labo interface automatically extracts the HEX data <code>0x??</code> and ignores the rest. True plug-and-play.
+  </div>
+</div>
+
+<script>
+for(let i=1;i<=5;i++){
+document.write(`
+<div class="slot-section">
+<span class="slot-title">CONFIGURATION SLOT ${i}</span>
+
+<div class="name-input-box">
+  <label style="color:var(--yellow); font-size:0.9rem; margin-bottom:8px;">SET CUSTOM NAME FOR THIS SLOT:</label>
+  <input type="text" id="n${i}" class="name-input" placeholder="SLOT ${i}" maxlength="15">
+</div>
+
+<div class="console-row">
+<div class="code-box"><label><i class="fas fa-image"></i> IMAGE A (NORMAL)</label><textarea id="c${i}_a" placeholder="Paste HEX code here (0x00, 0x01...)"></textarea></div>
+<div class="code-box"><label><i class="fas fa-skull-crossbones"></i> IMAGE B (ATTACK)</label><textarea id="c${i}_b" placeholder="Paste HEX code here (0x00, 0x01...)"></textarea></div>
+</div>
+</div>`);}
+</script>
+</div>
+
+<div class="install-box">
+<button class="btn-inject" onclick="sendAll()"><i class="fas fa-bolt"></i> INJECT IMAGES INTO HAKO</button>
+<div id="status-msg">SYSTEM READY</div>
+</div>
+
+<script>
+/* ================= PROTECTION INSPECTION ================= */
+document.addEventListener('contextmenu', event => event.preventDefault());
+document.onkeydown = function(e) {
+    if(e.keyCode == 123) { return false; }
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { return false; }
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { return false; }
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { return false; }
+    if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { return false; }
+};
+/* ========================================================= */
+
+const popupUpdate = document.getElementById("popup-update");
+const bootLog = document.getElementById("boot-log");
+const injectLog = document.getElementById("inject-log");
+const usbStatus = document.getElementById("usb-status");
+const enterBtn = document.getElementById("enter-btn");
+const siteLocker = document.getElementById("site-locker");
+const bootTitle = document.getElementById("boot-title");
+
+let usbConnected = false;
+let siteUnlocked = false;
+
+const bootLines = ["[BOOT] HAKO Sentinel v3.0","[INIT] Memory check .... OK","[INIT] Secure channel .. OK","[INIT] Serial interface .. WAIT","[INFO] Awaiting USB device..."];
+let bootIndex = 0;
+function boot(){ if(bootIndex<bootLines.length){ bootLog.textContent+=bootLines[bootIndex++]+"\n"; setTimeout(boot,600); } }
+
+async function detectUSB(){
+  if(!("serial" in navigator)) return;
+  const ports = await navigator.serial.getPorts();
+  if(ports.length){
+    usbConnected = true; usbStatus.className="usb-status ok"; usbStatus.textContent="USB DEVICE: CONNECTED";
+    enterBtn.classList.remove("disabled"); enterBtn.textContent="ENTER LABORATORY";
+    siteLocker.style.display="none"; if(!siteUnlocked) popupUpdate.style.display="block";
+  } else {
+    usbConnected = false; usbStatus.className="usb-status warning"; usbStatus.textContent="USB DEVICE: NOT DETECTED";
+    enterBtn.classList.add("disabled"); enterBtn.textContent="USB REQUIRED";
+    if(!siteUnlocked){ siteLocker.style.display="flex"; popupUpdate.style.display="block"; }
+  }
+}
+
+function closeHakoPopup(){ if(!usbConnected) return; popupUpdate.style.display="none"; siteUnlocked = true; }
+bootTitle.onclick = e => { if(e.ctrlKey) bootLog.textContent+="\n[EXPERT MODE ENABLED]\n"; };
+
+window.onload = ()=>{ boot(); detectUSB(); setInterval(detectUSB,1500); };
+
+function addLog(m){ injectLog.textContent += "> " + m + "\n"; injectLog.scrollTop = injectLog.scrollHeight; }
+
+async function sendAll() {
+    const status = document.getElementById('status-msg');
+    try {
+        const port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+        
+        document.getElementById('modal-inject').style.display = 'block';
+        document.getElementById('finish-area').style.display = 'none';
+        injectLog.textContent = "";
+        addLog("DÉMARRAGE DE L'INJECTION...");
+
+        const writer = port.writable.getWriter();
+        const encoder = new TextEncoder();
+
+        for (let i = 1; i <= 5; i++) {
+            const customName = document.getElementById(`n${i}`).value || `SLOT ${i}`;
+            for (let f of ['a','b']) {
+                const textarea = document.getElementById(`c${i}_${f}`);
+                if(!textarea) continue;
+                const val = textarea.value;
+                if(val.length<50) continue;
+
+                const fileName = `s${i}_${f}.bin`;
+                addLog(`TRANSFERT : ${fileName} (${customName})`);
+                
+                await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
+                await new Promise(r=>setTimeout(r,1000));
+
+                const matches=val.match(/0x[0-9a-fA-F]{2}/g);
+                if(matches){
+                  for(let j=0;j<matches.length;j++){
+                    await writer.write(encoder.encode(matches[j]));
+                    if(j%20===0) await new Promise(r=>setTimeout(r,10));
+                  }
+                  await writer.write(encoder.encode("\n"));
+                  addLog("SYNC OK.");
+                  await new Promise(r=>setTimeout(r,1200));
+                }
+            }
+        }
+        addLog("INJECTION COMPLETE.");
+        document.getElementById('finish-area').style.display = 'block';
+        status.innerText="TRANSFER SUCCESSFUL!";
+        writer.releaseLock(); await port.close();
+    } catch(e){ status.innerText="ERROR: "+e; addLog("ERREUR: " + e); }
+}
+</script>
+</body>
+</html>

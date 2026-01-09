@@ -17,15 +17,16 @@
         h1 { font-size: clamp(2rem, 8vw, 5rem); margin: 0; text-transform: uppercase; background: linear-gradient(to right, var(--yellow), var(--magenta)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .version { background: var(--yellow); color: #000; padding: 5px 15px; border-radius: 50px; font-weight: bold; font-size: 0.9rem; }
 
-        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 40px 0; width: 90%; }
-        .feat { background: rgba(255,255,255,0.05); border: 1px solid var(--cyan); padding: 20px; border-radius: 15px; text-align: center; transition: 0.3s; }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 40px 0; width: 95%; }
+        .feat { background: rgba(255,255,255,0.05); border: 1px solid var(--cyan); padding: 20px; border-radius: 15px; text-align: center; transition: 0.3s; position: relative; overflow: hidden; }
         .feat:hover { border-color: var(--yellow); transform: translateY(-5px); }
         .feat i { font-size: 2.5rem; color: var(--yellow); margin-bottom: 15px; }
+        
+        .badge-test { position: absolute; top: 10px; right: -30px; background: var(--magenta); color: white; font-size: 0.7rem; padding: 5px 40px; transform: rotate(45deg); font-weight: bold; }
 
         .install-box { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 30px; min-height: 250px; width: 100%; }
 
-        /* Masquer le bouton et les stats quand c'est fini */
-        .finished esp-web-install-button, .finished #click-stats { display: none !important; }
+        .finished esp-web-install-button, .finished #click-stats, .finished .flash-warning { display: none !important; }
 
         esp-web-install-button button {
             background: var(--yellow) !important; color: #000 !important;
@@ -38,23 +39,32 @@
         #success-container { display: none; flex-direction: column; align-items: center; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .finished #success-container { display: flex; }
 
-        #success-img { width: 180px; height: auto; filter: drop-shadow(0 0 20px var(--yellow)); margin-bottom: 20px; }
         .success-msg { background: rgba(0, 229, 255, 0.1); border: 2px solid var(--cyan); padding: 20px 40px; border-radius: 20px; text-align: center; box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); }
         .success-msg h2 { color: var(--yellow); margin: 0 0 10px 0; text-transform: uppercase; }
         .success-msg p { color: #fff; margin: 0; font-size: 1.1rem; }
 
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* Popup */
-        .modal-hako { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); }
-        .modal-content { background: #111; border: 2px solid var(--yellow); margin: 15% auto; padding: 30px; width: 90%; max-width: 400px; text-align: center; border-radius: 20px; box-shadow: 0 0 30px var(--yellow); }
-        .btn-close-modal { background: var(--yellow); color: #000; border: none; padding: 10px 30px; border-radius: 50px; font-weight: bold; margin-top: 20px; cursor: pointer; }
+        /* MODAL SYSTEM UPDATED */
+        .modal-hako { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); }
+        .modal-content { background: #111; border: 2px solid var(--yellow); margin: 10% auto; padding: 30px; width: 90%; max-width: 450px; text-align: center; border-radius: 20px; box-shadow: 0 0 30px var(--yellow); position: relative; overflow: hidden; }
+        
+        .modal-content::after {
+            content: ""; position: absolute; inset: 0;
+            background: repeating-linear-gradient(to bottom, rgba(255,255,255,.03) 0px, rgba(255,255,255,.03) 1px, transparent 2px, transparent 4px);
+            animation: scan 6s linear infinite; pointer-events: none;
+        }
+        @keyframes scan { from{background-position:0 0} to{background-position:0 100%} }
+
+        .btn-close-modal { background: var(--yellow); color: #000; border: none; padding: 12px 30px; border-radius: 50px; font-weight: bold; margin-top: 20px; cursor: pointer; box-shadow: 0 0 10px var(--yellow); }
 
         #click-stats { margin-top: 15px; font-family: monospace; font-size: 0.9rem; color: var(--magenta); font-weight: bold; }
-        
-        .nav-footer { display: flex; gap: 30px; margin-top: 20px; }
-        .nav-footer a { color: #fff; text-decoration: none; border-bottom: 1px solid var(--magenta); padding-bottom: 5px; font-weight: bold; }
-        
+        .flash-warning { margin-top: 20px; font-size: 0.85rem; color: #888; max-width: 400px; line-height: 1.4; }
+        .flash-warning b { color: var(--yellow); }
+
+        .nav-footer { display: flex; gap: 30px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+        .nav-footer a { color: #fff; text-decoration: none; border-bottom: 1px solid var(--magenta); padding-bottom: 5px; font-weight: bold; transition: 0.3s; }
+        .nav-footer a:hover { color: var(--magenta); }
         #visit-counter { margin-top: 50px; font-size: 0.7rem; color: #444; font-family: monospace; }
     </style>
 </head>
@@ -64,7 +74,7 @@
         <div class="modal-content">
             <h2 style="color: var(--yellow);">SYSTEM UPDATED</h2>
             <p style="color: #fff;">Latest version deployed on:</p>
-            <h3 style="color: var(--cyan);">January 06, 2026</h3>
+            <h3 style="color: var(--cyan);">January 09, 2026</h3>
             <p style="font-size: 0.8rem; color: #888;">Check documentation for the full changelog.</p>
             <button class="btn-close-modal" onclick="closeHakoPopup()">ENTER SYSTEM</button>
         </div>
@@ -87,12 +97,18 @@
             <div class="feat">
                 <i class="fas fa-user-plus"></i>
                 <h3>Scalable</h3>
-                <p>Thanks to the built-in menu (long press on button 14), you can change themes in real-time. I will add new characters with each update.</p>
+                <p>Thanks to the built-in menu, you can change themes in real-time.</p>
             </div>
             <div class="feat">
                 <i class="fas fa-sync"></i>
                 <h3>Updates</h3>
-                <p>New attack and scan features regularly added by the community.</p>
+                <p>New Multi-Radar engine (8 modes) and fixed Image Import system for full slot compatibility.</p>
+            </div>
+            <div class="feat" style="border-color: var(--magenta);">
+                <div class="badge-test">TESTING</div>
+                <i class="fas fa-flask" style="color: var(--magenta);"></i>
+                <h3>Hako Labo</h3>
+                <p>Custom injection system. Now fully operational and available for all users. Start importing your custom themes now.</p>
             </div>
         </div>
 
@@ -101,8 +117,11 @@
                 <button slot="activate">INSTALL HAKO SENTINEL</button>
             </esp-web-install-button>
 
+            <div class="flash-warning">
+                <i class="fas fa-info-circle"></i> Note: The flash may seem to hang at <b>98%</b> for 1 or 2 minutes. This is <b>normal</b>, the system is verifying data integrity. Do not disconnect.
+            </div>
+
             <div id="success-container">
-                <img src="success.png" id="success-img" alt="Flash Success">
                 <div class="success-msg">
                     <h2>Flashing Complete!</h2>
                     <p>Thank you for your trust, your Hako is ready ❤️</p>
@@ -116,6 +135,7 @@
     <div class="nav-footer">
         <a href="info.html"><i class="fas fa-book"></i> Documentation</a>
         <a href="remote.html"><i class="fas fa-gamepad"></i> Remote Control</a>
+        <a href="labo.html" style="border-color: var(--yellow); color: var(--yellow);"><i class="fas fa-flask"></i> HAKO LABO</a>
     </div>
 
     <div id="visit-counter">CONNECTED TO HAKO CLOUD</div>
@@ -139,16 +159,10 @@
 
         const btn = document.querySelector("esp-web-install-button");
         const box = document.getElementById("main-installer");
-        
+
         btn.addEventListener("install-success", () => { 
             box.classList.add("finished"); 
         });
-
-        setInterval(() => {
-            if (btn.state === "FINISHED" || btn.getAttribute("state") === "FINISHED") {
-                box.classList.add("finished");
-            }
-        }, 1000);
     </script>
 </body>
 </html>

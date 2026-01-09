@@ -1,12 +1,12 @@
 {
-  "name": "HAKO SENTINEL DEAUTH",
+  "name": "HAKO SENTINEL",
+  "version": "1.2",
+  "chipFamily": "ESP32-S3",
   "builds": [
     {
       "chipFamily": "ESP32-S3",
       "parts": [
-        { "path": "bootloader.bin", "offset": 0 },
-        { "path": "partitions.bin", "offset": 32768 },
-        { "path": "firmware.bin", "offset": 65536 }
+        { "path": "Hako_Sentinel_Full.bin", "offset": 0 }
       ]
     }
   ]
