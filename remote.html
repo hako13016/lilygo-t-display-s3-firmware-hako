@@ -1,111 +1,181 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HAKO REMOTE S3</title>
+    <title>HAKO REMOTE S3 - CYBERSECURITY</title>
+    <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --theme: #ff00ff; --bg: #050505; --cyan: #00e5ff; --yellow: #ffff00; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
+        :root { --theme: #00ff00; --bg: #050505; --cyan: #00e5ff; --yellow: #ffff00; --magenta: #ff00ff; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
         
-        /* Bouton retour */
+        /* SYSTÈME DE LICENCE OVERLAY */
+        #license-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 10000;
+        }
+        .lic-input {
+            padding: 15px; width: 280px; background: #111; border: 1px solid var(--cyan);
+            color: white; text-align: center; font-size: 1.1rem; border-radius: 5px; margin-bottom: 20px;
+            text-transform: uppercase; font-family: monospace;
+        }
+        .lic-btn { background: var(--cyan); color: black; padding: 12px 30px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+
+        /* CONTENU DU SITE (Caché par défaut) */
+        #main-site { display: none; flex-direction: column; align-items: center; width: 100%; }
+
         .back-home { position: absolute; top: 20px; left: 20px; color: var(--cyan); text-decoration: none; font-size: 0.9rem; border-bottom: 1px solid var(--cyan); }
-
-        .remote-container { border: 2px solid var(--theme); background: rgba(0,0,0,0.9); width: 92%; max-width: 450px; border-radius: 30px; box-shadow: 0 0 30px var(--theme); padding: 25px; display: flex; flex-direction: column; align-items: center; transition: 0.3s; z-index: 10; }
-        
-        .virtual-screen {
-            width: 100%; height: 140px; background: #000; border: 3px solid var(--theme); border-radius: 15px;
-            margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 10px; text-align: center; box-shadow: inset 0 0 15px rgba(255,255,255,0.05);
-        }
-
-        #screen-text { font-family: 'Courier New', monospace; font-size: 1.2rem; color: var(--theme); text-transform: uppercase; }
-        #captured-pass { color: #ff0000; font-weight: bold; font-size: 1.8rem; margin-top: 10px; text-shadow: 0 0 10px rgba(255,0,0,0.5); }
-
-        #status { margin-bottom: 20px; padding: 8px 20px; border-radius: 50px; border: 1px solid var(--theme); color: var(--theme); cursor: pointer; font-size: 0.9rem; }
-        #status.connected { background: var(--theme); color: #000; font-weight: bold; }
-
-        .d-pad { display: grid; grid-template-columns: repeat(3, 80px); grid-template-rows: repeat(3, 80px); gap: 12px; }
-        .ctrl-btn { width: 80px; height: 80px; background: #111; border: 2px solid var(--theme); color: var(--theme); border-radius: 20px; font-size: 1.8rem; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; }
+        .remote-container { border: 2px solid var(--theme); background: rgba(0,0,0,0.9); width: 100%; max-width: 450px; border-radius: 30px; box-shadow: 0 0 30px var(--theme); padding: 20px; display: flex; flex-direction: column; align-items: center; z-index: 10; }
+        .info-panel { width: 100%; background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--magenta); font-size: 0.8rem; }
+        .specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; color: var(--cyan); }
+        .spec-item { border-left: 2px solid var(--yellow); padding-left: 8px; }
+        .flash-area { margin: 10px 0 20px 0; text-align: center; width: 100%; }
+        esp-web-install-button button { background: var(--magenta) !important; color: #fff !important; padding: 12px 25px !important; border-radius: 50px !important; font-weight: bold !important; cursor: pointer !important; border: none !important; box-shadow: 0 0 15px var(--magenta) !important; }
+        .virtual-screen { width: 100%; height: 120px; background: #000; border: 3px solid var(--theme); border-radius: 15px; margin-bottom: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; text-align: center; box-shadow: inset 0 0 15px rgba(255,255,255,0.05); }
+        #screen-text { font-family: 'Courier New', monospace; font-size: 1.1rem; color: var(--theme); text-transform: uppercase; }
+        #captured-pass { color: #ff0000; font-weight: bold; font-size: 1.5rem; margin-top: 5px; text-shadow: 0 0 10px rgba(255,0,0,0.5); }
+        #status { margin-bottom: 15px; padding: 10px 25px; border-radius: 50px; border: 1px solid var(--theme); color: var(--theme); cursor: pointer; font-size: 0.9rem; font-weight: bold; width: 80%; text-align: center; }
+        #status.connected { background: var(--theme); color: #000; }
+        .d-pad { display: grid; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(3, 70px); gap: 10px; }
+        .ctrl-btn { width: 70px; height: 70px; background: #111; border: 2px solid var(--theme); color: var(--theme); border-radius: 15px; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .ctrl-btn:active { transform: scale(0.9); background: var(--theme); color: #000; }
-        .btn-ok { background: #fff; color: #000; border: none; font-size: 1.4rem; font-weight: bold; }
+        .btn-ok { background: #fff; color: #000; border: none; font-size: 1.2rem; font-weight: bold; }
 
-        /* Style de la Pop-up Automatique (identique index) */
-        .modal-hako {
-            display: none; position: fixed; z-index: 9999;
-            left: 0; top: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-        }
-        .modal-content {
-            background: #111; border: 2px solid var(--yellow);
-            margin: 15% auto; padding: 30px; width: 85%; max-width: 400px;
-            text-align: center; border-radius: 20px; box-shadow: 0 0 30px var(--yellow);
-        }
-        .btn-close-modal {
-            background: var(--yellow); color: #000; border: none;
-            padding: 10px 30px; border-radius: 50px; font-weight: bold;
-            margin-top: 20px; cursor: pointer;
-        }
+        .modal-hako { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); }
+        .modal-content { background: #111; border: 2px solid var(--yellow); margin: 15% auto; padding: 25px; width: 80%; max-width: 350px; text-align: center; border-radius: 20px; box-shadow: 0 0 30px var(--yellow); }
     </style>
 </head>
 <body>
 
-<div id="popup-update" class="modal-hako">
+    <div id="license-screen">
+        <i class="fas fa-key fa-3x" style="color: var(--cyan); margin-bottom: 20px;"></i>
+        <h2 id="status-auth" style="color: white;">REMOTE AUTHENTICATION</h2>
+        <div id="lic-form">
+            <input type="text" id="lic-key" class="lic-input" placeholder="HAKO-PRO-XXXX">
+            <br>
+            <button class="lic-btn" onclick="validateKey()">UNLOCK ACCESS</button>
+        </div>
+        <p id="lic-msg" style="margin-top:15px; font-weight:bold; color: red;"></p>
+    </div>
+
+    <div id="popup-update" class="modal-hako">
         <div class="modal-content">
-            <h2 style="color: var(--yellow);">SYSTEM UPDATED</h2>
-            <p style="color: #fff;">Latest version deployed on:</p>
-            <h3 style="color: var(--cyan);">January 09, 2026</h3>
-            <p style="font-size: 0.8rem; color: #888;">Check documentation for the full changelog.</p>
-            <button class="btn-close-modal" onclick="closeHakoPopup()">ENTER SYSTEM</button>
+            <h2 style="color: var(--yellow);">HAKO SENTINEL</h2>
+            <p style="color: #fff;">Cybersecurity Software Loaded</p>
+            <h3 style="color: var(--cyan);">BETA VERSION 2026</h3>
+            <button style="background:var(--yellow); border:none; padding:10px 20px; border-radius:20px; font-weight:bold; cursor:pointer;" onclick="closeHakoPopup()">ENTER REMOTE</button>
         </div>
     </div>
 
-    <a href="index.html" class="back-home">← Retour à l'accueil</a>
+    <div id="main-site">
+        <a href="index.html" class="back-home"><i class="fas fa-home"></i> HOME</a>
+        <div class="remote-container">
+            <h2 style="margin: 0 0 15px 0; color: var(--theme); letter-spacing: 1px; font-size: 1.1rem; text-align: center;">DEAUTH SYSTEM REMOTE ACCESS</h2>
 
-    <div class="remote-container" id="main-box">
-        <h2 style="margin-top:0; letter-spacing: 3px; color: var(--theme);">HAKO S3</h2>
+            <div class="info-panel">
+                <div style="color:var(--magenta); font-weight:bold; text-transform:uppercase; border-bottom:1px solid #333; padding-bottom:5px;">Firmware Capabilities</div>
+                <div class="specs-grid">
+                    <div class="spec-item"><b>TARGETS:</b> PC / Android / iOS</div>
+                    <div class="spec-item"><b>HARDWARE:</b> ESP32-S3</div>
+                    <div class="spec-item"><b>PROTOCOL:</b> 802.11b 2.4GHz</div>
+                    <div class="spec-item"><b>MODE:</b> Multi-Flood</div>
+                </div>
+                <div class="flash-area">
+                   <esp-web-install-button manifest="./manifest_remote.json">
+                        <button slot="activate">FLASH S3 FIRMWARE</button>
+                    </esp-web-install-button>
+                </div>
+            </div>
 
-        <div class="virtual-screen" id="v-screen">
-            <div id="screen-text">NON CONNECTÉ</div>
-            <div id="captured-pass"></div>
-        </div>
+            <div class="virtual-screen" id="v-screen">
+                <div id="screen-text">S3 DISCONNECTED</div>
+                <div id="captured-pass"></div>
+            </div>
 
-        <div id="status" onclick="initSerial()"><i class="fas fa-plug"></i> CONNECTER USB</div>
+            <div id="status" onclick="initSerial()"><i class="fas fa-plug"></i> CONNECT USB</div>
 
-        <div class="d-pad">
-            <button class="ctrl-btn" style="grid-column: 2;" onclick="send('U')"><i class="fas fa-chevron-up"></i></button>
-            <button class="ctrl-btn" style="grid-column: 1; grid-row: 2;" onclick="send('L')"><i class="fas fa-chevron-left"></i></button>
-            <button class="ctrl-btn btn-ok" style="grid-column: 2; grid-row: 2;" onclick="send('S')">OK</button>
-            <button class="ctrl-btn" style="grid-column: 3; grid-row: 2;" onclick="send('R')"><i class="fas fa-chevron-right"></i></button>
-            <button class="ctrl-btn" style="grid-column: 2; grid-row: 3;" onclick="send('D')"><i class="fas fa-chevron-down"></i></button>
+            <div class="d-pad">
+                <button class="ctrl-btn" style="grid-column: 2;" onclick="send('U')"><i class="fas fa-chevron-up"></i></button>
+                <button class="ctrl-btn" style="grid-column: 1; grid-row: 2;" onclick="send('L')"><i class="fas fa-chevron-left"></i></button>
+                <button class="ctrl-btn btn-ok" style="grid-column: 2; grid-row: 2;" onclick="send('S')">OK</button>
+                <button class="ctrl-btn" style="grid-column: 3; grid-row: 2;" onclick="send('R')"><i class="fas fa-chevron-right"></i></button>
+                <button class="ctrl-btn" style="grid-column: 2; grid-row: 3;" onclick="send('D')"><i class="fas fa-chevron-down"></i></button>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- GESTION DE LA POP-UP ---
-        window.onload = function() {
-            document.getElementById('popup-update').style.display = 'block';
-        };
+        const WORKER_URL = "https://spring-glade-0359.mercifoi435.workers.dev/";
 
-        function closeHakoPopup() {
-            document.getElementById('popup-update').style.display = 'none';
+        function getHWID() {
+            let id = localStorage.getItem('hako_hwid_v2');
+            if (!id) {
+                id = 'HAKO-' + Math.random().toString(36).substr(2, 10).toUpperCase();
+                localStorage.setItem('hako_hwid_v2', id);
+            }
+            return id;
         }
 
+        async function checkAccess(key, isAuto = false) {
+            const msg = document.getElementById('lic-msg');
+            const statusAuth = document.getElementById('status-auth');
+            const site = document.getElementById('main-site');
+
+            if (isAuto) statusAuth.innerText = "VERIFYING ACCESS...";
+
+            try {
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ license: key, hwid: getHWID() })
+                });
+
+                const data = await response.json();
+
+                if (data && data.valid === true) {
+                    localStorage.setItem("hako_session_key", key);
+                    document.getElementById('license-screen').style.display = 'none';
+                    site.style.display = 'flex';
+                    // On affiche le popup seulement après validation
+                    if(!isAuto) document.getElementById('popup-update').style.display = 'block';
+                } else {
+                    localStorage.removeItem("hako_session_key");
+                    if (isAuto) location.reload();
+                    msg.innerText = "INVALID OR EXPIRED LICENSE";
+                }
+            } catch (e) {
+                msg.innerText = "SERVER ERROR";
+            }
+        }
+
+        function validateKey() {
+            const key = document.getElementById('lic-key').value.trim();
+            if(key) checkAccess(key, false);
+        }
+
+        window.onload = function() {
+            const savedKey = localStorage.getItem("hako_session_key");
+            if (savedKey) {
+                checkAccess(savedKey, true);
+            }
+        };
+
+        function closeHakoPopup() { document.getElementById('popup-update').style.display = 'none'; }
+
+        // --- SERIAL LOGIC ---
         let port, writer;
 
         async function initSerial() {
             try {
                 port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
-                
-                const statusBtn = document.getElementById('status');
-                statusBtn.classList.add('connected');
-                statusBtn.innerHTML = "<i class='fas fa-link'></i> LILYGO CONNECTÉ";
-                
+                document.getElementById('status').classList.add('connected');
+                document.getElementById('status').innerHTML = "LILYGO CONNECTED";
                 writer = port.writable.getWriter();
                 readLoop();
-            } catch (err) { alert("Erreur: " + err); }
+            } catch (err) { alert("USB Error: " + err); }
         }
 
         async function readLoop() {
@@ -116,27 +186,15 @@
                     while (true) {
                         const { value, done } = await reader.read();
                         if (done) break;
-                        const data = decoder.decode(value);
-                        
-                        // --- GESTION DU TEXTE ---
-                        if (data.includes("TEXT:")) {
-                            let msg = data.split("TEXT:")[1].split("\n")[0].trim();
-                            document.getElementById('screen-text').innerText = msg;
-                            if (!msg.includes("CAPTURE")) document.getElementById('captured-pass').innerText = "";
-                        }
-
-                        // --- GESTION DE LA COULEUR ---
-                        if (data.includes("COLOR:")) {
-                            let hex = "#" + data.split("COLOR:")[1].trim().substring(0,6);
-                            document.documentElement.style.setProperty('--theme', hex);
-                        }
-
-                        // --- GESTION DU MOT DE PASSE ---
-                        if (data.includes("PASS:")) {
-                            let pass = data.split("PASS:")[1].trim();
-                            document.getElementById('screen-text').innerText = "MDP RÉCUPÉRÉ :";
-                            document.getElementById('captured-pass').innerText = pass;
-                        }
+                        const lines = decoder.decode(value).split('\n');
+                        lines.forEach(line => {
+                            if (line.includes("TEXT:")) document.getElementById('screen-text').innerText = line.split("TEXT:")[1].trim();
+                            if (line.includes("PASS:")) {
+                                document.getElementById('screen-text').innerText = "PASSWORD CAPTURED:";
+                                document.getElementById('captured-pass').innerText = line.split("PASS:")[1].trim();
+                            }
+                            if (line.includes("COLOR:")) document.documentElement.style.setProperty('--theme', "#" + line.split("COLOR:")[1].trim());
+                        });
                     }
                 } catch (err) { console.error(err); } finally { reader.releaseLock(); }
             }
@@ -148,6 +206,8 @@
                 await writer.write(encoder.encode(cmd));
             }
         }
+
+        document.addEventListener('contextmenu', e => e.preventDefault());
     </script>
 </body>
 </html>
