@@ -45,7 +45,6 @@
 
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* MODAL SYSTEM UPDATED */
         .modal-hako { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); }
         .modal-content { background: #111; border: 2px solid var(--yellow); margin: 10% auto; padding: 30px; width: 90%; max-width: 450px; text-align: center; border-radius: 20px; box-shadow: 0 0 30px var(--yellow); position: relative; overflow: hidden; }
         
@@ -74,7 +73,7 @@
         <div class="modal-content">
             <h2 style="color: var(--yellow);">SYSTEM UPDATED</h2>
             <p style="color: #fff;">Latest version deployed on:</p>
-            <h3 style="color: var(--cyan);">January 09, 2026</h3>
+            <h3 style="color: var(--cyan);">January 18, 2026</h3>
             <p style="font-size: 0.8rem; color: #888;">Check documentation for the full changelog.</p>
             <button class="btn-close-modal" onclick="closeHakoPopup()">ENTER SYSTEM</button>
         </div>
@@ -85,10 +84,23 @@
         <h1>HAKO SENTINEL</h1>
         <span class="version">STABLE v1.2 | ESP32-S3 ONLY</span>
         <p style="color: #ccc; font-size: 1.2rem; margin-top: 20px;">
-            The ultimate WiFi monitoring and defense system for Lilygo T-Display S3.
+            <b>The ultimate WiFi monitoring and defense system for Lilygo T-Display S3.</b> 
+                  <p>802.11b 2.4 GHz WiFi Deauth System</p>
         </p>
 
         <div class="feature-grid">
+            <div class="feat" style="border-color: var(--yellow);">
+                <div class="badge-test" style="background: var(--yellow); color: #000;">SPECS</div>
+                <i class="fas fa-server"></i>
+                <h3>Deauth System (HEADLESS MODE)</h3>
+                <p style="font-size: 0.85rem; line-height: 1.6;">
+                    <b>TARGETS:</b> PC / Android / iOS<br>
+                    <b>HARDWARE:</b> ESP32-S3<br>
+                    <b>PROTOCOL:</b> 802.11b 2.4GHz<br>
+                    <b>MODE:</b> Multi-Flood
+                </p>
+            </div>
+
             <div class="feat">
                 <i class="fas fa-battery-full"></i>
                 <h3>Eco Sleep Mode</h3>
@@ -105,10 +117,16 @@
                 <p>New Multi-Radar engine (8 modes) and fixed Image Import system for full slot compatibility.</p>
             </div>
             <div class="feat" style="border-color: var(--magenta);">
-                <div class="badge-test">TESTING</div>
+                <div class="badge-test"> HAKO LABO</div>
                 <i class="fas fa-flask" style="color: var(--magenta);"></i>
                 <h3>Hako Labo</h3>
                 <p>Custom injection system. Now fully operational and available for all users. Start importing your custom themes now.</p>
+            </div>
+            <div class="feat" style="border-color: var(--cyan);">
+                <div class="badge-test" style="background: var(--cyan); color: #000;">BETA</div>
+                <i class="fas fa-shield-alt" style="color: var(--cyan);"></i>
+                <h3>Deauth System</h3>
+                <p>Support for PC and Phone Deauthentication. Note: Disconnection may take 1-3 min depending on phone version.</p>
             </div>
         </div>
 
@@ -134,13 +152,23 @@
 
     <div class="nav-footer">
         <a href="info.html"><i class="fas fa-book"></i> Documentation</a>
-        <a href="remote.html"><i class="fas fa-gamepad"></i> Remote Control</a>
+        <a href="remote.html"><i class="fas fa-gamepad"></i>DEAUTH Remote Control</a>
         <a href="labo.html" style="border-color: var(--yellow); color: var(--yellow);"><i class="fas fa-flask"></i> HAKO LABO</a>
+        <a href="deauth.html" style="border-color: var(--cyan); color: var(--cyan);"><i class="fas fa-shield-alt"></i> INSTALL DEAUTH SYSTEM</a>
     </div>
 
     <div id="visit-counter">CONNECTED TO HAKO CLOUD</div>
 
     <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) { return false; }
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { return false; }
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { return false; }
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { return false; }
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { return false; }
+        };
+
         window.onload = function() {
             document.getElementById('popup-update').style.display = 'block';
         };

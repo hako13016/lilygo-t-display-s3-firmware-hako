@@ -8,13 +8,17 @@
         :root { --cyan: #00e5ff; --yellow: #ffff00; --bg: #050505; --magenta: #ff00ff; }
         body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; padding: 40px; display: flex; flex-direction: column; align-items: center; }
         .card { background: #111; border: 1px solid var(--yellow); padding: 25px; border-radius: 20px; width: 100%; max-width: 600px; margin-bottom: 20px; }
-        h2 { color: var(--cyan); margin-top: 0; }
+        h2 { color: var(--yellow); margin-top: 0; }
         .highlight { color: var(--yellow); font-weight: bold; }
         .back-btn { color: var(--cyan); text-decoration: none; margin-bottom: 30px; display: block; }
         
         /* Changelog style */
         .update-header { border-left: 4px solid var(--magenta); padding-left: 15px; margin-bottom: 30px; width: 100%; max-width: 600px; }
         #click-stats-info { color: var(--magenta); font-family: monospace; margin-top: 10px; font-weight: bold; }
+
+        /* Style spécifique pour la grille technique */
+        .specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .spec-item { border-left: 2px solid var(--yellow); padding-left: 10px; font-size: 0.9rem; color: var(--yellow); }
     </style>
 </head>
 <body>
@@ -22,17 +26,38 @@
     
     <div class="update-header">
         <h1 style="margin:0;">System Details</h1>
-        <p style="color: var(--yellow); margin: 5px 0;">LAST UPDATE: <span id="current-date">January 09, 2026</span></p>
+        <p style="color: var(--yellow); margin: 5px 0;">LAST UPDATE: <span id="current-date">January 18, 2026</span></p>
         <div id="click-stats-info">[SYSTEM] FETCHING GLOBAL STATS...</div>
     </div>
 
+    <div class="card" style="border-color: var(--cyan);">
+        <h2 style="color:red">☢️ Firmware DEAUTH Remote Control Capabilities (Beta)</h2>
+        <p>Technical specifications for the current Hako Sentinel build:</p>
+        <div class="specs-grid">
+            <div class="spec-item"><b>TARGETS:</b> PC / Android / iOS</div>
+            <div class="spec-item"><b>HARDWARE:</b> ESP32-S3</div>
+            <div class="spec-item"><b>PROTOCOL:</b> 802.11b 2.4GHz</div>
+            <div class="spec-item"><b>MODE:</b> Multi-Flood</div>
+        </div>
+    </div>
+
+    <div class="card" style="border-color: var(--magenta);">
+        <h2 style="color:red">🚔 Deauth All Devices Firmware (Beta)</h2>
+        <p>A specialized firmware for network stress-testing and mass deauthentication:</p>
+        <ul style="color: #ccc;">
+            <li><span class="highlight">Full Compatibility:</span> Attacks targets on <span class="highlight">PC (Windows/Linux/Mac)</span> and <span class="highlight">Mobile (Android/iOS)</span>.</li>
+            <li><span class="highlight">Multi-Target:</span> Sends continuous deauthentication frames to clear the WiFi environment.</li>
+            <li><span class="highlight">Sync Delay:</span> Depending on the phone version, the software may take <span class="highlight">1 to 3 minutes</span> to fully disconnect the device.</li>
+        </ul>
+    </div>
+
     <div class="card">
-        <h2>🛡️ Sentinel Intelligence</h2>
+        <h2 style="color:red">🛡️ Sentinel Intelligence</h2>
         <p>The software constantly scans WiFi channels. If it detects a <span class="highlight">DEAUTH</span> or <span class="highlight">DISASSOC</span> type attack, it wakes up the screen and triggers the character animation.</p>
     </div>
 
     <div class="card" style="border-color: var(--cyan);">
-        <h2>📡 Multi-Radar Engine (8 Modes)</h2>
+        <h2 style="color:red">📡 Multi-Radar Engine (8 Modes)</h2>
         <p>HAKO now integrates 8 switchable radar aesthetics via the menu. Each mode adapts its visual behavior during an attack:</p>
         <ul style="color: #ccc;">
             <li><span class="highlight">CYBER & SECTOR:</span> High-precision tactical sweeps.</li>
@@ -43,7 +68,7 @@
     </div>
 
     <div class="card">
-        <h2>🔋 Power Management</h2>
+        <h2 style="color:red">🔋 Power Management</h2>
         <p>Unlike other firmwares, HAKO SENTINEL:</p>
         <ul>
             <li>Lowers CPU frequency to <span class="highlight">80MHz</span> at rest.</li>
@@ -53,7 +78,7 @@
     </div>
 
     <div class="card">
-        <h2>🎭 Full Customization</h2>
+        <h2 style="color:red">🎭 Full Customization</h2>
         <p>Thanks to the built-in menu (long press on button 14), you can change themes and radar styles in real-time. <span class="highlight">I add new characters and radar designs with each update.</span></p>
     </div>
 
@@ -64,6 +89,7 @@
             <li><span class="highlight">8 Radar Modes:</span> Choose your favorite UI style.</li>
             <li><span class="highlight">Image Slot Recovery:</span> Fixed the missing first image bug on imports.</li>
             <li><span class="highlight">Animation Sync:</span> Smoother transitions during signal interference.</li>
+            <li><span class="highlight">Deauth All Devices Firmware:</span> Full Compatibility: Attacks targets on PC (Windows/Linux/Mac) and Mobile (Android/iOS).</li>
         </ul>
     </div>
 
@@ -72,6 +98,16 @@
     </div>
 
     <script>
+        /* ================= PROTECTION INSPECTION ================= */
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(e.keyCode == 123) { return false; }
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { return false; }
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { return false; }
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { return false; }
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { return false; }
+        };
+
         // --- FETCH FLASH BUTTON STATS ---
         const get_url_info = "https://api.countapi.xyz/get/hako-sentinel-v1/flash_clicks";
 
