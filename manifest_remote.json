@@ -1,0 +1,12 @@
+{
+  "name": "HAKO REMOTE SYSTEM",
+  "version": "1.0",
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "REMOTE_ACCESS.bin", "offset": 0 }
+      ]
+    }
+  ]
+}

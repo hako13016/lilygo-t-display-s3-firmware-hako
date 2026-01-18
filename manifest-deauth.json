@@ -1,0 +1,13 @@
+{
+  "name": "HAKO DEAUTH SYSTEM",
+  "version": "1.0 BETA",
+  "chipFamily": "ESP32-S3",
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "DEAUTH_ALL_DEVICES.bin", "offset": 0 }
+      ]
+    }
+  ]
+}
