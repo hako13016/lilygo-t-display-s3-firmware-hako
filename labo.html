@@ -114,8 +114,8 @@ textarea { background:#000; color:#00ff41; border:1px solid #444;
 <h2 style="color:var(--cyan)">INJECTION IN PROGRESS...</h2>
 <pre id="inject-log" class="inject-log"></pre>
 <div id="finish-area" style="display:none">
-<h3 style="color:var(--yellow)">INJECTION TERMINÉE</h3>
-<button class="btn-close-modal" onclick="document.getElementById('modal-inject').style.display='none'">RETOUR</button>
+<h3 style="color:var(--yellow)">INJECTION COMPLETE</h3>
+<button class="btn-close-modal" onclick="document.getElementById('modal-inject').style.display='none'">BACK</button>
 </div>
 </div>
 </div>
@@ -230,7 +230,7 @@ async function sendAll() {
         document.getElementById('modal-inject').style.display = 'block';
         document.getElementById('finish-area').style.display = 'none';
         injectLog.textContent = "";
-        addLog("DÉMARRAGE DE L'INJECTION...");
+        addLog("STARTING INJECTION...");
 
         const writer = port.writable.getWriter();
         const encoder = new TextEncoder();
