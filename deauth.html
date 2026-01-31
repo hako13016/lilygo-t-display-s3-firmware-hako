@@ -3,193 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DEAUTH ALL DEVICES | HAKO SENTINEL</title>
+    <title>HAKO SENTINEL // DEAUTH PROTOCOL</title>
     <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --cyan: #00e5ff; --yellow: #ffff00; --magenta: #ff00ff; --bg: #050505; }
-        body { background: var(--bg); color: var(--cyan); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        
-        /* SECURITY OVERLAY */
-        #license-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 9999;
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        :root {
+            --neon-green: #00FF41;
+            --dark-bg: #050505;
+            --card-bg: rgba(10, 10, 10, 0.9);
+            --info-color: #00BFFF;
         }
 
-        /* VALIDATION MODAL */
-        #hwid-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center;
-        }
-        .modal-box {
-            background: #111; border: 2px solid var(--yellow); padding: 30px;
-            max-width: 450px; text-align: center; border-radius: 15px; box-shadow: 0 0 40px var(--yellow);
-        }
-
-        .lic-input {
-            padding: 15px; width: 280px; background: #111; border: 1px solid var(--cyan);
-            color: white; text-align: center; font-size: 1.1rem; border-radius: 5px; margin-bottom: 20px;
-            text-transform: uppercase; font-family: monospace;
-        }
-        .lic-btn {
-            background: var(--cyan); color: black; padding: 12px 30px; border: none;
-            border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s;
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            background-color: var(--dark-bg);
+            color: var(--neon-green);
+            font-family: 'Roboto Mono', monospace;
+            overflow-x: hidden;
         }
 
-        /* ORIGINAL DESIGN */
-        #main-site { display: none; width: 100%; flex-direction: column; align-items: center; }
-        .hero { text-align: center; padding: 40px 20px; width: 100%; max-width: 900px; }
-        h1 { font-size: clamp(1.5rem, 6vw, 3.5rem); margin: 10px 0; text-transform: uppercase; color: var(--cyan); text-shadow: 0 0 15px var(--cyan); }
-        .warning-banner { background: #ff000022; border: 1px solid #ff0000; color: #ff5555; padding: 15px; border-radius: 10px; margin: 20px 0; font-weight: bold; font-size: 0.9rem; }
-        .firmware-card { background: rgba(255,255,255,0.05); border: 2px solid var(--magenta); border-radius: 20px; padding: 30px; margin: 20px 0; position: relative; width: 100%; box-sizing: border-box; }
-        .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; margin: 20px 0; font-size: 0.9rem; }
-        .spec-item { border-left: 3px solid var(--yellow); padding-left: 10px; }
-        .install-box { margin-top: 30px; text-align: center; }
-        
+        /* Matrix Rain Background Canvas */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        #main-site {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hero {
+            width: 100%;
+            text-align: center;
+            padding: 60px 20px;
+            border: 1px solid var(--neon-green);
+            background: var(--card-bg);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+            margin-bottom: 30px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 8vw, 5rem);
+            text-transform: uppercase;
+            margin: 0;
+            text-shadow: 0 0 20px var(--neon-green);
+        }
+
+        /* AVERTISSEMENT PROFESSIONNEL */
+        .warning-banner {
+            width: 100%;
+            background: rgba(40, 0, 0, 0.8);
+            border: 2px solid #ff0000;
+            color: #ffffff;
+            padding: 30px;
+            margin: 20px 0;
+            text-align: left;
+            box-sizing: border-box;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+        }
+
+        .warning-banner h2 {
+            color: #ff0000;
+            margin-top: 0;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid #ff0000;
+            padding-bottom: 10px;
+        }
+
+        .warning-banner p, .warning-banner li {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .warning-banner ul {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+
+        .firmware-card {
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--neon-green);
+            padding: 40px;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.1);
+            box-sizing: border-box;
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .spec-box {
+            border: 1px dashed var(--neon-green);
+            padding: 20px;
+            background: rgba(0, 255, 65, 0.05);
+        }
+
+        .spec-box b { color: var(--info-color); }
+
+        .flash-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 40px;
+            padding: 30px;
+            border-top: 1px solid var(--neon-green);
+        }
+
         esp-web-install-button button {
-            background: var(--magenta) !important; color: #fff !important;
-            padding: 18px 40px !important; border-radius: 50px !important;
-            font-weight: bold !important; font-size: 1.2rem !important;
-            cursor: pointer !important; box-shadow: 0 0 20px var(--magenta) !important;
-            border: none !important; transition: 0.3s ease !important;
+            background: var(--neon-green) !important;
+            color: black !important;
+            font-family: 'Roboto Mono', monospace !important;
+            font-weight: bold !important;
+            padding: 25px 60px !important;
+            font-size: 1.5rem !important;
+            border: none !important;
+            border-radius: 0px !important;
+            cursor: pointer !important;
+            box-shadow: 0 0 20px var(--neon-green) !important;
         }
-        
-        .back-link { margin-top: 40px; color: var(--yellow); text-decoration: none; font-weight: bold; border: 1px solid var(--yellow); padding: 10px 25px; border-radius: 50px; transition: 0.3s; display: inline-block; }
-        .back-link:hover { background: var(--yellow); color: #000; }
-        .phone-delay-info { margin-top: 15px; font-size: 0.8rem; color: #ff0000; font-style: italic; }
+
+        .back-link {
+            margin: 40px 0;
+            color: var(--neon-green);
+            text-decoration: none;
+            border: 1px solid var(--neon-green);
+            padding: 10px 30px;
+            transition: 0.3s;
+        }
+
+        .back-link:hover {
+            background: var(--neon-green);
+            color: black;
+        }
     </style>
 </head>
 <body>
 
-    <div id="hwid-modal">
-        <div class="modal-box">
-            <h2 style="color: var(--yellow);">LICENSE VALIDATED!</h2>
-            <p style="color: white;">Your HWID is now linked:</p>
-            <p id="display-hwid" style="background:#000; color:var(--cyan); padding:10px; border:1px dashed var(--cyan); font-family:monospace;"></p>
-            <p style="color: #ff5555; font-weight: bold; font-size: 0.9rem;">
-                ⚠️ DO NOT SHARE. Otherwise, your license will be immediately REVOKED by the system.
-            </p>
-            <button class="lic-btn" onclick="closeWarning()">ENTER SYSTEM</button>
-        </div>
-    </div>
-
-    <div id="license-screen">
-        <i class="fas fa-user-shield fa-3x" style="color: var(--cyan); margin-bottom: 20px;"></i>
-        <h2 id="status-text" style="color: white;">SYSTEM AUTHENTICATION</h2>
-        <div id="lic-form">
-            <p>Enter your HAKO PRO license key:</p>
-            <input type="text" id="lic-key" class="lic-input" placeholder="HAKO-XXXX-XXXX">
-            <br>
-            <button id="auth-btn" class="lic-btn" onclick="validateKey()">LOGIN</button>
-        </div>
-        <p id="lic-msg" style="margin-top:15px; font-weight:bold; color: red;"></p>
-    </div>
+    <canvas id="matrix-canvas"></canvas>
 
     <div id="main-site">
-        <div class="hero">
-            <i class="fas fa-radiation fa-3x" style="color: var(--cyan);"></i>
-            <h1>DEAUTH ALL DEVICES BETA</h1>
-            <p style="color: #ff0000; font-weight: bold;">Specialized Firmware for PC & Phone Deauthentication</p>
-
-            <div class="warning-banner">
-                <i class="fas fa-exclamation-triangle"></i> CYBERSECURITY RESEARCH ONLY. USE RESPONSIBLY AND ON YOUR OWN EQUIPMENT.
-            </div>
-
-            <div class="firmware-card">
-                <h3 style="color: var(--yellow); text-transform: uppercase;">Firmware Capabilities</h3>
-                <div class="specs">
-                    <div class="spec-item"><b>TARGETS:</b> PC ALL / Android ALL / iOS ALL / ALL DEVICES SUPPORTED </div>
-                    <div class="spec-item"><b>PROTOCOL:</b> Wi-Fi 1 (802.11b) 2.4 GHz </div>
-                    <div class="spec-item"><b>HARDWARE:</b> LILYGO T-Display-S3 ESP32-S3 </div>
-                    <div class="spec-item"><b>MODE:</b> Multi-Target Flood </div>
-                </div>
+        <div class="container">
+            <div class="hero">
+                <i class="fas fa-user-secret fa-4x"></i>
+                <h1>DEAUTH PROTOCOL</h1>
+                <p style="color: var(--info-color);">TARGET: LILYGO DISPLAY S3 SYSTEM</p>
                 
-                <p style="color: #ff0000; font-size: 0.95rem; line-height: 1.6;">
-                    This specific firmware is optimized for mass deauthentication. It sends management frames to disconnect clients from their access points. High stability on LILYGO T-Display-S3.
-                </p>
-
-                <div class="install-box">
-                    <esp-web-install-button manifest="./manifest-deauth.json">
-                        <button slot="activate">FLASH DEAUTH FIRMWARE</button>
-                    </esp-web-install-button>
-                    <p class="phone-delay-info">
-                        <i class="fas fa-info-circle"></i> Note: The flash may seem to hang at 98%. This is normal, system is verifying data.
+                <div class="warning-banner">
+                    <h2><i class="fas fa-exclamation-triangle"></i> LEGAL DISCLAIMER & USER RESPONSIBILITY</h2>
+                    <p><strong>1. AUTHORIZED USE ONLY:</strong> This software is strictly designed for educational purposes and authorized penetration testing. It must only be executed on hardware and networks you own or have explicit permission to test.</p>
+                    <p><strong>2. CONTROLLED ENVIRONMENT:</strong> Intended for use exclusively within a controlled laboratory environment. Unauthorized deployment on public networks is strictly prohibited.</p>
+                    <p><strong>3. LIMITATION OF LIABILITY:</strong> HAKO SENTINEL shall NOT be held responsible for any damage, data loss, or legal consequences. By flashing this firmware, you acknowledge that you are fully responsible for your actions.</p>
+                    <p><strong>4. HARDWARE NOTICE:</strong> Optimized specifically for LILYGO T-Display-S3. Use on other hardware is at your own risk.</p>
+                    <p style="color: #ff0000; font-weight: bold; margin-top: 15px; text-align: center; border-top: 1px solid #ff0000; padding-top: 10px;">
+                        BY PROCEEDING, YOU CONFIRM YOU HAVE READ AND ACCEPTED THESE TERMS.
                     </p>
                 </div>
             </div>
 
-            <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> RETURN TO MAIN SYSTEM</a>
+            <div class="firmware-card">
+                <h3>// SYSTEM CONFIGURATION</h3>
+                <div class="specs-grid">
+                    <div class="spec-box"><b>HARDWARE:</b> LILYGO T-Display-S3</div>
+                    <div class="spec-box"><b>FIRMWARE:</b> HAKO-SENTINEL-v2</div>
+                    <div class="spec-box"><b>FREQUENCY:</b> 2.4GHz ISM Band</div>
+                    <div class="spec-box"><b>METHOD:</b> Management Frame Deauth</div>
+                </div>
+
+                <div class="flash-section">
+                    <esp-web-install-button manifest="./manifest-deauth.json">
+                        <button slot="activate">EXECUTE FLASH COMMAND</button>
+                    </esp-web-install-button>
+                    <p style="font-size: 0.8rem; opacity: 0.7;">> STATUS: READY_TO_DEPLOY</p>
+                </div>
+            </div>
+
+            <a href="index.html" class="back-link">_RETURN_TO_BASE</a>
         </div>
     </div>
 
-<script>
-const WORKER_URL = "https://spring-glade-0359.mercifoi435.workers.dev/";
-
-function getHWID() {
-    let id = localStorage.getItem('hako_hwid');
-    if (!id) {
-        id = 'WEB-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-        localStorage.setItem('hako_hwid', id);
-    }
-    return id;
-}
-
-async function checkAccess(key, isAuto = false) {
-    const msg = document.getElementById('lic-msg');
-    const status = document.getElementById('status-text');
-
-    if (isAuto) status.innerText = "VERIFYING SESSION...";
-
-    try {
-        const response = await fetch(WORKER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ license: key, hwid: getHWID() })
-        });
-
-        const data = await response.json();
-
-        if (data.valid) {
-            localStorage.setItem("hako_active_license", key);
-            document.getElementById('license-screen').style.display = 'none';
-            
-            if(!isAuto) {
-                document.getElementById('display-hwid').innerText = getHWID();
-                document.getElementById('hwid-modal').style.display = 'flex';
-            } else {
-                document.getElementById('main-site').style.display = 'flex';
+    <script>
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const characters = "0123456789ABCDEFHIJKLMNOPQRSTUVWXYZ@#$%&*+-";
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+        for (let x = 0; x < columns; x++) drops[x] = 1;
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const text = characters.charAt(Math.floor(Math.random() * characters.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
             }
-        } else {
-            localStorage.removeItem("hako_active_license");
-            document.getElementById('license-screen').style.display = 'flex';
-            document.getElementById('main-site').style.display = 'none';
-            status.innerText = "ACCESS DENIED";
-            msg.innerText = "INVALID OR REVOKED LICENSE";
         }
-    } catch (e) {
-        msg.innerText = "SERVER ERROR";
-    }
-}
-
-function validateKey() {
-    const key = document.getElementById('lic-key').value.trim();
-    if(key) checkAccess(key, false);
-}
-
-function closeWarning() {
-    document.getElementById('hwid-modal').style.display = 'none';
-    document.getElementById('main-site').style.display = 'flex';
-}
-
-window.onload = function() {
-    const savedKey = localStorage.getItem("hako_active_license");
-    if (savedKey) {
-        checkAccess(savedKey, true);
-    }
-}
-
-document.addEventListener('contextmenu', e => e.preventDefault());
-</script>
+        setInterval(drawMatrix, 50);
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
 </body>
 </html>
