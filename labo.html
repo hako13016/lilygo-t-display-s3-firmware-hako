@@ -129,23 +129,23 @@ textarea { background:#000; color:#00ff41; border:1px solid #444;
 
 <div class="container">
 <div class="info-section">
-  <h2><i class="fas fa-info-circle"></i> HOW TO CUSTOMIZE YOUR IMAGES</h2>
+  <h2><i class="fas fa-palette"></i> HOW TO CUSTOMIZE YOUR COLOR IMAGES</h2>
   <ol>
-    <li><strong>Prepare:</strong> Download or create an image. Use <a href="https://www.photopea.com/" target="_blank" class="step-link">Photopea</a> to resize it (Square format 150x150 recommended).</li>
-    <li><strong>Remove Background:</strong> Go to <a href="https://www.remove.bg/" target="_blank" class="step-link">remove.bg</a> to clean your image background.</li>
-    <li><strong>Convert to Code:</strong> Use <a href="https://javl.github.io/image2cpp/" target="_blank" class="step-link">image2cpp</a> with these 100% reliable settings:
+    <li><strong>Prepare:</strong> Resize your image to <strong>150x150</strong> pixels (use <a href="https://www.photopea.com/" target="_blank" class="step-link">Photopea</a>).</li>
+    <li><strong>Remove Background:</strong> Clean the background via <a href="https://www.remove.bg/" target="_blank" class="step-link">remove.bg</a>.</li>
+    <li><strong>Convert to Code:</strong> Use <a href="https://javl.github.io/image2cpp/" target="_blank" class="step-link">image2cpp</a> with these <strong>COLOR</strong> settings:
       <ul>
-        <li><strong>Image Settings:</strong> Canvas size 150 x 150 | Background: <span style="color:var(--magenta)">Transparent</span></li>
-        <li><strong>Brightness / Alpha threshold:</strong> Adjust until you like the preview.</li>
+        <li><strong>Image Settings:</strong> Canvas size 150 x 150 | Background: <span style="color:var(--magenta)">Black</span></li>
         <li><strong>Scaling:</strong> scale to fit, keep aspect ratio.</li>
-        <li><strong>Dithering:</strong> <span style="color:var(--magenta)">Atkinson</span> (for best quality).</li>
+        <li><strong>Output format:</strong> Select <span style="color:var(--magenta)">"Arduino Code"</span>.</li>
+        <li><strong>Draw mode:</strong> Select <span style="color:var(--yellow); font-weight:bold;">"Color (565)"</span> <i class="fas fa-check-circle"></i></li>
       </ul>
     </li>
-    <li><strong>Export:</strong> Select <span style="color:var(--magenta)">"Arduino Code"</span> as output format and click <strong>Generate Code</strong>.</li>
-    <li><strong>Custom Name:</strong> You can **rename your images as you want** in the name field of each slot before injecting.</li>
+    <li><strong>Export:</strong> Click <strong>Generate Code</strong>. (The HEX code will be much longer).</li>
+    <li><strong>Custom Name:</strong> Rename your slots as you want before injecting.</li>
   </ol>
   <div class="pro-tip">
-    <strong><i class="fas fa-lightbulb"></i> PRO TIP:</strong> Just copy and paste the entire generated code! Our Labo interface automatically extracts the HEX data <code>0x??</code> and ignores the rest. True plug-and-play.
+    <strong><i class="fas fa-lightbulb"></i> PRO TIP:</strong> Just copy and paste the entire generated code! Our Labo interface automatically extracts the HEX data <code>0x??</code>. <strong>Make sure "Color (565)" is selected!</strong>
   </div>
 </div>
 
@@ -241,31 +241,52 @@ async function sendAll() {
                 const textarea = document.getElementById(`c${i}_${f}`);
                 if(!textarea) continue;
                 const val = textarea.value;
-                if(val.length<50) continue;
+                if(val.length < 50) continue;
 
                 const fileName = `s${i}_${f}.bin`;
                 addLog(`TRANSFERT : ${fileName} (${customName})`);
                 
+                // Envoi de l'entête
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
-                await new Promise(r=>setTimeout(r,1000));
+                await new Promise(r => setTimeout(r, 1000));
 
-                const matches=val.match(/0x[0-9a-fA-F]{2}/g);
-                if(matches){
-                  for(let j=0;j<matches.length;j++){
-                    await writer.write(encoder.encode(matches[j]));
-                    if(j%20===0) await new Promise(r=>setTimeout(r,10));
-                  }
-                  await writer.write(encoder.encode("\n"));
-                  addLog("SYNC OK.");
-                  await new Promise(r=>setTimeout(r,1200));
+                // --- CORRECTION ICI : Détection des codes 0x à 2 ou 4 caractères ---
+                const matches = val.match(/0x[0-9a-fA-F]{2,4}/g);
+                
+                if (matches) {
+                    for (let j = 0; j < matches.length; j++) {
+                        let hex = matches[j].replace('0x', '');
+                        
+                        // Si c'est du 16-bit (Couleur 565), on sépare en deux octets
+                        if (hex.length === 4) {
+                            let high = "0x" + hex.substring(0, 2);
+                            let low = "0x" + hex.substring(2, 4);
+                            await writer.write(encoder.encode(high));
+                            await writer.write(encoder.encode(low));
+                        } else {
+                            // Si c'est du 8-bit (Noir et Blanc)
+                            await writer.write(encoder.encode("0x" + hex));
+                        }
+
+                        // Petite pause pour ne pas saturer le buffer de l'ESP32
+                        if (j % 30 === 0) await new Promise(r => setTimeout(r, 5));
+                    }
+                    
+                    await writer.write(encoder.encode("\n"));
+                    addLog(`SYNC ${fileName} OK.`);
+                    await new Promise(r => setTimeout(r, 1200));
                 }
             }
         }
         addLog("INJECTION COMPLETE.");
         document.getElementById('finish-area').style.display = 'block';
-        status.innerText="TRANSFER SUCCESSFUL!";
-        writer.releaseLock(); await port.close();
-    } catch(e){ status.innerText="ERROR: "+e; addLog("ERREUR: " + e); }
+        status.innerText = "TRANSFER SUCCESSFUL!";
+        writer.releaseLock(); 
+        await port.close();
+    } catch(e) { 
+        status.innerText = "ERROR: " + e; 
+        addLog("ERREUR: " + e); 
+    }
 }
 </script>
 </body>
