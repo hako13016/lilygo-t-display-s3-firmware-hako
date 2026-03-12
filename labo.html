@@ -131,22 +131,10 @@ textarea { background:#000; color:#00ff41; border:1px solid #444;
 <div class="info-section">
   <h2><i class="fas fa-info-circle"></i> HOW TO CUSTOMIZE YOUR IMAGES</h2>
   <ol>
-    <li><strong>Prepare:</strong> Download or create an image. Use <a href="https://www.photopea.com/" target="_blank" class="step-link">Photopea</a> to resize it (Square format 150x150 recommended).</li>
-    <li><strong>Remove Background:</strong> Go to <a href="https://www.remove.bg/" target="_blank" class="step-link">remove.bg</a> to clean your image background.</li>
-    <li><strong>Convert to Code:</strong> Use <a href="https://javl.github.io/image2cpp/" target="_blank" class="step-link">image2cpp</a> with these 100% reliable settings:
-      <ul>
-        <li><strong>Image Settings:</strong> Canvas size 150 x 150 | Background: <span style="color:var(--magenta)">Transparent</span></li>
-        <li><strong>Brightness / Alpha threshold:</strong> Adjust until you like the preview.</li>
-        <li><strong>Scaling:</strong> scale to fit, keep aspect ratio.</li>
-        <li><strong>Dithering:</strong> <span style="color:var(--magenta)">Atkinson</span> (for best quality).</li>
-      </ul>
-    </li>
-    <li><strong>Export:</strong> Select <span style="color:var(--magenta)">"Arduino Code"</span> as output format and click <strong>Generate Code</strong>.</li>
-    <li><strong>Custom Name:</strong> You can **rename your images as you want** in the name field of each slot before injecting.</li>
+    <li><strong>Prepare:</strong> Square format 150x150.</li>
+    <li><strong>Convert:</strong> Use image2cpp (Settings: 150x150, Transparent, Atkinson).</li>
+    <li><strong>Export:</strong> Arduino Code.</li>
   </ol>
-  <div class="pro-tip">
-    <strong><i class="fas fa-lightbulb"></i> PRO TIP:</strong> Just copy and paste the entire generated code! Our Labo interface automatically extracts the HEX data <code>0x??</code> and ignores the rest. True plug-and-play.
-  </div>
 </div>
 
 <script>
@@ -154,12 +142,10 @@ for(let i=1;i<=5;i++){
 document.write(`
 <div class="slot-section">
 <span class="slot-title">CONFIGURATION SLOT ${i}</span>
-
 <div class="name-input-box">
   <label style="color:var(--yellow); font-size:0.9rem; margin-bottom:8px;">SET CUSTOM NAME FOR THIS SLOT:</label>
   <input type="text" id="n${i}" class="name-input" placeholder="SLOT ${i}" maxlength="15">
 </div>
-
 <div class="console-row">
 <div class="code-box"><label><i class="fas fa-image"></i> IMAGE A (NORMAL)</label><textarea id="c${i}_a" placeholder="Paste HEX code here (0x00, 0x01...)"></textarea></div>
 <div class="code-box"><label><i class="fas fa-skull-crossbones"></i> IMAGE B (ATTACK)</label><textarea id="c${i}_b" placeholder="Paste HEX code here (0x00, 0x01...)"></textarea></div>
@@ -174,7 +160,7 @@ document.write(`
 </div>
 
 <script>
-/* ================= PROTECTION INSPECTION ================= */
+/* ================= PROTECTION INSPECTION RESTORÉE ================= */
 document.addEventListener('contextmenu', event => event.preventDefault());
 document.onkeydown = function(e) {
     if(e.keyCode == 123) { return false; }
@@ -183,8 +169,8 @@ document.onkeydown = function(e) {
     if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { return false; }
     if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { return false; }
 };
-/* ========================================================= */
 
+/* ================= LOGIQUE USB ET INJECTION CORRIGÉE ================= */
 const popupUpdate = document.getElementById("popup-update");
 const bootLog = document.getElementById("boot-log");
 const injectLog = document.getElementById("inject-log");
@@ -217,7 +203,13 @@ async function detectUSB(){
 function closeHakoPopup(){ if(!usbConnected) return; popupUpdate.style.display="none"; siteUnlocked = true; }
 bootTitle.onclick = e => { if(e.ctrlKey) bootLog.textContent+="\n[EXPERT MODE ENABLED]\n"; };
 
-window.onload = ()=>{ boot(); detectUSB(); setInterval(detectUSB,1500); };
+// Utilisation des Events pour éviter les conflits de ports lors de l'injection
+window.onload = ()=>{ 
+    boot(); 
+    detectUSB(); 
+    navigator.serial.addEventListener("connect", detectUSB);
+    navigator.serial.addEventListener("disconnect", detectUSB);
+};
 
 function addLog(m){ injectLog.textContent += "> " + m + "\n"; injectLog.scrollTop = injectLog.scrollHeight; }
 
@@ -225,12 +217,15 @@ async function sendAll() {
     const status = document.getElementById('status-msg');
     try {
         const port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
+        // Configuration Robuste pour Display S3
+        await port.open({ baudRate: 115200, bufferSize: 16384 });
+        // Réveil forcé du chip USB
+        await port.setSignals({ dataTerminalReady: true, requestToSend: true });
         
         document.getElementById('modal-inject').style.display = 'block';
         document.getElementById('finish-area').style.display = 'none';
         injectLog.textContent = "";
-        addLog("STARTING INJECTION...");
+        addLog("STARTING SECURE INJECTION...");
 
         const writer = port.writable.getWriter();
         const encoder = new TextEncoder();
@@ -247,23 +242,24 @@ async function sendAll() {
                 addLog(`TRANSFERT : ${fileName} (${customName})`);
                 
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
-                await new Promise(r=>setTimeout(r,1000));
+                await new Promise(r=>setTimeout(r,500)); 
 
                 const matches=val.match(/0x[0-9a-fA-F]{2}/g);
                 if(matches){
                   for(let j=0;j<matches.length;j++){
                     await writer.write(encoder.encode(matches[j]));
-                    if(j%20===0) await new Promise(r=>setTimeout(r,10));
+                    // Anti-saturation du buffer (très important pour le S3)
+                    if(j%64===0) await new Promise(r=>setTimeout(r,5));
                   }
                   await writer.write(encoder.encode("\n"));
                   addLog("SYNC OK.");
-                  await new Promise(r=>setTimeout(r,1200));
+                  await new Promise(r=>setTimeout(r,600));
                 }
             }
         }
-        addLog("INJECTION COMPLETE.");
+        addLog("MISSION ACCOMPLIE.");
         document.getElementById('finish-area').style.display = 'block';
-        status.innerText="TRANSFER SUCCESSFUL!";
+        status.innerText="INJECTION SUCCESSFUL!";
         writer.releaseLock(); await port.close();
     } catch(e){ status.innerText="ERROR: "+e; addLog("ERREUR: " + e); }
 }
