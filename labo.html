@@ -150,13 +150,40 @@ textarea { background:#000; color:#00ff41; border:1px solid #444;
 </div>
 
 <script>
+for(let i=1;i<=5;i++){
+document.write(`
+<div class="slot-section">
+<span class="slot-title">CONFIGURATION SLOT ${i}</span>
+
+<div class="name-input-box">
+  <label style="color:var(--yellow); font-size:0.9rem; margin-bottom:8px;">SET CUSTOM NAME FOR THIS SLOT:</label>
+  <input type="text" id="n${i}" class="name-input" placeholder="SLOT ${i}" maxlength="15">
+</div>
+
+<div class="console-row">
+<div class="code-box"><label><i class="fas fa-image"></i> IMAGE A (NORMAL)</label><textarea id="c${i}_a" placeholder="Paste HEX code here (0x00, 0x01...)"></textarea></div>
+<div class="code-box"><label><i class="fas fa-skull-crossbones"></i> IMAGE B (ATTACK)</label><textarea id="c${i}_b" placeholder="Paste HEX code here (0x00, 0x01...)"></textarea></div>
+</div>
+</div>`);}
+</script>
+</div>
+
+<div class="install-box">
+<button class="btn-inject" onclick="sendAll()"><i class="fas fa-bolt"></i> INJECT IMAGES INTO HAKO</button>
+<div id="status-msg">SYSTEM READY</div>
+</div>
+
+<script>
 /* ================= PROTECTION INSPECTION ================= */
 document.addEventListener('contextmenu', event => event.preventDefault());
 document.onkeydown = function(e) {
-    if(e.keyCode == 123) return false;
-    if(e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 67 || e.keyCode == 74)) return false;
-    if(e.ctrlKey && e.keyCode == 85) return false;
+    if(e.keyCode == 123) { return false; }
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { return false; }
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { return false; }
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { return false; }
+    if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { return false; }
 };
+/* ========================================================= */
 
 const popupUpdate = document.getElementById("popup-update");
 const bootLog = document.getElementById("boot-log");
@@ -169,22 +196,22 @@ const bootTitle = document.getElementById("boot-title");
 let usbConnected = false;
 let siteUnlocked = false;
 
-const bootLines = ["[BOOT] HAKO Sentinel v3.0","[INIT] Color Engine RGB565..OK","[INIT] Secure channel .. OK","[INIT] Serial interface .. WAIT","[INFO] Awaiting USB device..."];
+const bootLines = ["[BOOT] HAKO Sentinel v3.0","[INIT] Memory check .... OK","[INIT] Secure channel .. OK","[INIT] Serial interface .. WAIT","[INFO] Awaiting USB device..."];
 let bootIndex = 0;
 function boot(){ if(bootIndex<bootLines.length){ bootLog.textContent+=bootLines[bootIndex++]+"\n"; setTimeout(boot,600); } }
 
 async function detectUSB(){
-    if(!("serial" in navigator)) return;
-    const ports = await navigator.serial.getPorts();
-    if(ports.length){
-        usbConnected = true; usbStatus.className="usb-status ok"; usbStatus.textContent="USB DEVICE: CONNECTED";
-        enterBtn.classList.remove("disabled"); enterBtn.textContent="ENTER LABORATORY";
-        siteLocker.style.display="none"; if(!siteUnlocked) popupUpdate.style.display="block";
-    } else {
-        usbConnected = false; usbStatus.className="usb-status warning"; usbStatus.textContent="USB DEVICE: NOT DETECTED";
-        enterBtn.classList.add("disabled"); enterBtn.textContent="USB REQUIRED";
-        if(!siteUnlocked){ siteLocker.style.display="flex"; popupUpdate.style.display="block"; }
-    }
+  if(!("serial" in navigator)) return;
+  const ports = await navigator.serial.getPorts();
+  if(ports.length){
+    usbConnected = true; usbStatus.className="usb-status ok"; usbStatus.textContent="USB DEVICE: CONNECTED";
+    enterBtn.classList.remove("disabled"); enterBtn.textContent="ENTER LABORATORY";
+    siteLocker.style.display="none"; if(!siteUnlocked) popupUpdate.style.display="block";
+  } else {
+    usbConnected = false; usbStatus.className="usb-status warning"; usbStatus.textContent="USB DEVICE: NOT DETECTED";
+    enterBtn.classList.add("disabled"); enterBtn.textContent="USB REQUIRED";
+    if(!siteUnlocked){ siteLocker.style.display="flex"; popupUpdate.style.display="block"; }
+  }
 }
 
 function closeHakoPopup(){ if(!usbConnected) return; popupUpdate.style.display="none"; siteUnlocked = true; }
@@ -203,52 +230,42 @@ async function sendAll() {
         document.getElementById('modal-inject').style.display = 'block';
         document.getElementById('finish-area').style.display = 'none';
         injectLog.textContent = "";
-        addLog("STARTING COLOR INJECTION (RGB565)...");
+        addLog("STARTING INJECTION...");
 
         const writer = port.writable.getWriter();
         const encoder = new TextEncoder();
 
         for (let i = 1; i <= 5; i++) {
-            // Récupération propre du nom du Slot
-            const customName = document.getElementById(`n${i}`).value.trim() || `SLOT ${i}`;
-            
+            const customName = document.getElementById(`n${i}`).value || `SLOT ${i}`;
             for (let f of ['a','b']) {
                 const textarea = document.getElementById(`c${i}_${f}`);
                 if(!textarea) continue;
                 const val = textarea.value;
-                
-                // On vérifie qu'il y a assez de données (pour 150x150 uint16, on attend beaucoup de caractères)
-                if(val.length < 1000) continue;
+                if(val.length<50) continue;
 
                 const fileName = `s${i}_${f}.bin`;
-                addLog(`SLOT ${i}: Sending ${f === 'a' ? 'Normal' : 'Attack'}...`);
+                addLog(`TRANSFERT : ${fileName} (${customName})`);
                 
-                // ENVOI DU HEADER : Crucial pour que l'ESP32 sache quel fichier ouvrir et comment le nommer
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
-                await new Promise(r=>setTimeout(r,800)); // Pause pour l'ouverture du fichier sur SD/Flash
+                await new Promise(r=>setTimeout(r,1000));
 
-                // Extraction des codes 16-BIT (0xXXXX)
-                const matches = val.match(/0x[0-9a-fA-F]{4}/g);
+                const matches=val.match(/0x[0-9a-fA-F]{2}/g);
                 if(matches){
-                    addLog(`Pixels: ${matches.length} found...`);
-                    for(let j=0; j<matches.length; j++){
-                        // Envoi de la valeur brute (ex: 0xFFFF)
-                        await writer.write(encoder.encode(matches[j]));
-                        
-                        // Pause de sécurité toutes les 64 itérations pour éviter le crash du buffer S3
-                        if(j % 64 === 0) await new Promise(r=>setTimeout(r,2));
-                    }
-                    await writer.write(encoder.encode("\n")); // Fin du fichier
-                    addLog(`SYNC ${fileName} OK.`);
-                    await new Promise(r=>setTimeout(r,1000));
+                  for(let j=0;j<matches.length;j++){
+                    await writer.write(encoder.encode(matches[j]));
+                    if(j%20===0) await new Promise(r=>setTimeout(r,10));
+                  }
+                  await writer.write(encoder.encode("\n"));
+                  addLog("SYNC OK.");
+                  await new Promise(r=>setTimeout(r,1200));
                 }
             }
         }
-        addLog("ALL SLOTS UPDATED.");
+        addLog("INJECTION COMPLETE.");
         document.getElementById('finish-area').style.display = 'block';
-        status.innerText="INJECTION SUCCESSFUL!";
+        status.innerText="TRANSFER SUCCESSFUL!";
         writer.releaseLock(); await port.close();
-    } catch(e){ status.innerText="ERROR: "+e; addLog("FAILED: " + e); }
+    } catch(e){ status.innerText="ERROR: "+e; addLog("ERREUR: " + e); }
 }
 </script>
 </body>
