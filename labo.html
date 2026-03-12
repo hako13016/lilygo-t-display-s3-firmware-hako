@@ -232,60 +232,43 @@ async function sendAll() {
         await port.open({ baudRate: 115200, bufferSize: 16384 });
         await port.setSignals({ dataTerminalReady: true, requestToSend: true });
 
-        document.getElementById('modal-inject').style.display = 'block';
-        document.getElementById('finish-area').style.display = 'none';
-        injectLog.textContent = "";
-        addLog("DÉMARRAGE INJECTION SÉCURISÉE...");
-
         const writer = port.writable.getWriter();
         const encoder = new TextEncoder();
+        document.getElementById('modal-inject').style.display = 'block';
+        injectLog.textContent = "";
 
         for (let i = 1; i <= 5; i++) {
             const customName = document.getElementById(`n${i}`).value || `SLOT ${i}`;
             for (let f of ['a','b']) {
                 const textarea = document.getElementById(`c${i}_${f}`);
-                if(!textarea) continue;
                 const val = textarea.value;
-                if(val.length < 50) continue;
+                if(!val || val.length < 100) continue;
 
                 const fileName = `s${i}_${f}.bin`;
-                addLog(`PRÉPARATION : ${fileName}`);
+                addLog(`INJECTING BINARY: ${fileName}...`);
                 
-                // 1. Envoyer le Header
+                // On envoie le Header en TEXTE
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
                 await new Promise(r => setTimeout(r, 600)); 
 
-                // 2. Extraire TOUS les octets (0x00 à 0xFF)
-                // On force le format 2 caractères pour éviter les erreurs de lecture
+                // --- CONVERSION HEX TEXTE -> BINAIRE PUR ---
                 const matches = val.match(/0x[0-9a-fA-F]{2}/g);
-                
-                if(matches) {
-                    addLog(`ENVOI DE ${matches.length} OCTETS...`);
-                    for(let j = 0; j < matches.length; j++) {
-                        // On envoie la chaîne "0xXX"
-                        await writer.write(encoder.encode(matches[j]));
-                        
-                        // Pause cruciale pour laisser le temps à l'ESP32 d'écrire dans la Flash
-                        if(j % 32 === 0) await new Promise(r => setTimeout(r, 4));
+                if(matches){
+                    const rawData = new Uint8Array(matches.length);
+                    for(let j=0; j<matches.length; j++){
+                        rawData[j] = parseInt(matches[j], 16);
                     }
-                    // 3. Envoyer le signal de fin de fichier
-                    await writer.write(encoder.encode("\n"));
-                    addLog(`SUCCÈS : ${fileName} SYNCHRONISÉ.`);
-                    await new Promise(r => setTimeout(r, 800));
-                } else {
-                    addLog(`ERREUR : Aucun code HEX valide trouvé dans le Slot ${i}`);
+                    // Envoi du bloc binaire réel
+                    await writer.write(rawData); 
+                    addLog(`SYNC OK: ${rawData.length} bytes sent.`);
+                    await new Promise(r => setTimeout(r, 1000));
                 }
             }
         }
-        addLog("MISSION TERMINÉE. DISPOSITIF PRÊT.");
+        addLog("INJECTION COMPLETE.");
         document.getElementById('finish-area').style.display = 'block';
-        status.innerText = "INJECTION RÉUSSIE !";
-        writer.releaseLock(); 
-        await port.close();
-    } catch(e) { 
-        status.innerText = "ERREUR : " + e; 
-        addLog("ERREUR CRITIQUE : " + e); 
-    }
+        writer.releaseLock(); await port.close();
+    } catch(e) { addLog("ERROR: " + e); }
 }
 </script>
 </body>
