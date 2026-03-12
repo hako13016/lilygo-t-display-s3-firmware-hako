@@ -229,15 +229,13 @@ async function sendAll() {
     const status = document.getElementById('status-msg');
     try {
         const port = await navigator.serial.requestPort();
-        // OUVERTURE AVEC PARAMÈTRES POUR LILYGO S3
         await port.open({ baudRate: 115200, bufferSize: 16384 });
-        // REVEIL DU CHIP USB (DTR/RTS)
         await port.setSignals({ dataTerminalReady: true, requestToSend: true });
 
         document.getElementById('modal-inject').style.display = 'block';
         document.getElementById('finish-area').style.display = 'none';
         injectLog.textContent = "";
-        addLog("STARTING INJECTION...");
+        addLog("DÉMARRAGE INJECTION SÉCURISÉE...");
 
         const writer = port.writable.getWriter();
         const encoder = new TextEncoder();
@@ -248,32 +246,46 @@ async function sendAll() {
                 const textarea = document.getElementById(`c${i}_${f}`);
                 if(!textarea) continue;
                 const val = textarea.value;
-                if(val.length<50) continue;
+                if(val.length < 50) continue;
 
                 const fileName = `s${i}_${f}.bin`;
-                addLog(`TRANSFERT : ${fileName} (${customName})`);
+                addLog(`PRÉPARATION : ${fileName}`);
                 
+                // 1. Envoyer le Header
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
-                await new Promise(r=>setTimeout(r,500)); 
+                await new Promise(r => setTimeout(r, 600)); 
 
-                const matches=val.match(/0x[0-9a-fA-F]{2}/g);
-                if(matches){
-                  for(let j=0;j<matches.length;j++){
-                    await writer.write(encoder.encode(matches[j]));
-                    // Petit délai anti-saturation pour LittleFS
-                    if(j%64===0) await new Promise(r=>setTimeout(r,5));
-                  }
-                  await writer.write(encoder.encode("\n"));
-                  addLog("SYNC OK.");
-                  await new Promise(r=>setTimeout(r,600));
+                // 2. Extraire TOUS les octets (0x00 à 0xFF)
+                // On force le format 2 caractères pour éviter les erreurs de lecture
+                const matches = val.match(/0x[0-9a-fA-F]{2}/g);
+                
+                if(matches) {
+                    addLog(`ENVOI DE ${matches.length} OCTETS...`);
+                    for(let j = 0; j < matches.length; j++) {
+                        // On envoie la chaîne "0xXX"
+                        await writer.write(encoder.encode(matches[j]));
+                        
+                        // Pause cruciale pour laisser le temps à l'ESP32 d'écrire dans la Flash
+                        if(j % 32 === 0) await new Promise(r => setTimeout(r, 4));
+                    }
+                    // 3. Envoyer le signal de fin de fichier
+                    await writer.write(encoder.encode("\n"));
+                    addLog(`SUCCÈS : ${fileName} SYNCHRONISÉ.`);
+                    await new Promise(r => setTimeout(r, 800));
+                } else {
+                    addLog(`ERREUR : Aucun code HEX valide trouvé dans le Slot ${i}`);
                 }
             }
         }
-        addLog("INJECTION COMPLETE.");
+        addLog("MISSION TERMINÉE. DISPOSITIF PRÊT.");
         document.getElementById('finish-area').style.display = 'block';
-        status.innerText="INJECTION SUCCESSFUL!";
-        writer.releaseLock(); await port.close();
-    } catch(e){ status.innerText="ERROR: "+e; addLog("ERREUR: " + e); }
+        status.innerText = "INJECTION RÉUSSIE !";
+        writer.releaseLock(); 
+        await port.close();
+    } catch(e) { 
+        status.innerText = "ERREUR : " + e; 
+        addLog("ERREUR CRITIQUE : " + e); 
+    }
 }
 </script>
 </body>
