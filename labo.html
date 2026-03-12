@@ -249,23 +249,20 @@ async function sendAll() {
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
                 await new Promise(r=>setTimeout(r,1000));
 
-                // LOGIQUE COULEUR : Supporte 0x00 et 0xFFFF
-                const matches=val.match(/0x[0-9a-fA-F]{2,4}/g);
-                if(matches){
-                  for(let j=0;j<matches.length;j++){
-                    let hex = matches[j].replace('0x', '');
-                    if (hex.length === 4) { // Couleur (ex: FFFF)
-                        await writer.write(encoder.encode("0x" + hex.substring(0, 2)));
-                        await writer.write(encoder.encode("0x" + hex.substring(2, 4)));
-                    } else { // Noir et Blanc (ex: FF)
-                        await writer.write(encoder.encode("0x" + hex));
-                    }
-                    if(j%20===0) await new Promise(r=>setTimeout(r,10));
-                  }
-                  await writer.write(encoder.encode("\n"));
-                  addLog("SYNC OK.");
-                  await new Promise(r=>setTimeout(r,1200));
-                }
+                // --- LOGIQUE COULEUR 16-BIT (Correction) ---
+const matches = val.match(/0x[0-9a-fA-F]{4}/g); 
+if (matches) {
+    for (let j = 0; j < matches.length; j++) {
+        // On envoie "0xXXXX" directement sans le couper
+        await writer.write(encoder.encode(matches[j]));
+        
+        // Pause toutes les 32 valeurs pour ne pas saturer le buffer série du S3
+        if (j % 32 === 0) await new Promise(r => setTimeout(r, 5));
+    }
+    await writer.write(encoder.encode("\n"));
+    addLog("SYNC OK.");
+    await new Promise(r => setTimeout(r, 1000));
+}
             }
         }
         addLog("INJECTION COMPLETE.");
