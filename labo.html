@@ -9,7 +9,7 @@
 :root { --cyan: #00e5ff; --yellow: #ffff00; --magenta: #ff00ff; --bg: #050505; }
 body { background: var(--bg); color: var(--cyan); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
 
-/* ================= POPUP ================= */
+/* ================= POPUP (TON STYLE ORIGINAL) ================= */
 .modal-hako {
   display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
   backdrop-filter: blur(8px); z-index: 9999;
@@ -48,7 +48,7 @@ body { background: var(--bg); color: var(--cyan); font-family: 'Segoe UI', sans-
 .btn-close-modal.disabled { opacity:.4; cursor:not-allowed; }
 .expert-hint { font-size:.65rem; color:#555; margin-top:10px; }
 
-/* ================= SITE ================= */
+/* ================= SITE STRUCTURE ================= */
 .hero { text-align: center; padding: 20px; width: 100%; }
 h1 { font-size: 3rem; margin: 0; text-transform: uppercase;
   background: linear-gradient(to right, var(--yellow), var(--magenta));
@@ -56,6 +56,7 @@ h1 { font-size: 3rem; margin: 0; text-transform: uppercase;
 }
 .container { width: 98%; max-width: 1900px; padding-bottom: 150px; }
 
+/* TES SECTIONS D'INFOS RÉCUPÉRÉES */
 .info-section { background: rgba(0,229,255,.05); border:1px dashed var(--cyan);
   padding:20px; border-radius:15px; margin-bottom:30px; color:#fff; line-height:1.6;
 }
@@ -73,19 +74,16 @@ h1 { font-size: 3rem; margin: 0; text-transform: uppercase;
 .console-row { display:flex; gap:20px; justify-content:center; }
 .code-box { flex:1; text-align: center; }
 
-/* PREVIEW CANVAS */
+/* AJOUT : STYLE POUR LES PREVIEWS */
 .preview-canvas { 
-    background: #000; 
-    border: 1px solid var(--magenta); 
-    margin-bottom: 10px; 
-    image-rendering: pixelated; /* Garde les pixels nets */
-    width: 150px; 
-    height: 150px;
+    background: #000; border: 1px solid var(--magenta); 
+    margin-bottom: 10px; image-rendering: pixelated; 
+    width: 150px; height: 150px; display: block; margin: 0 auto 10px auto;
 }
 
 label { font-size:1rem; color:#fff; display:block; margin-bottom:10px; text-transform:uppercase; font-weight:bold; text-align:center; }
 textarea { background:#000; color:#00ff41; border:1px solid #444;
-  width:100%; height:300px; font-size:0.75rem; font-family:'Courier New', monospace; padding:15px; outline:none; resize:vertical;
+  width:100%; height:300px; font-size:0.8rem; font-family:'Courier New', monospace; padding:15px; outline:none; resize:vertical;
 }
 
 .name-input-box { margin-bottom: 25px; text-align: center; border-bottom: 1px solid rgba(255,0,255,0.2); padding-bottom: 15px; }
@@ -112,8 +110,9 @@ textarea { background:#000; color:#00ff41; border:1px solid #444;
 <h2 id="boot-title">INITIALIZING HAKO LAB...</h2>
 <pre id="boot-log" class="boot-log"></pre>
 <div id="usb-status" class="usb-status warning">USB DEVICE: NOT DETECTED</div>
-<p class="popup-info">HAKO LABO PRO | Firmware Data Injection Interface</p>
+<p class="popup-info">HAKO LABO PRO This interface writes data directly to device firmware.</p>
 <button id="enter-btn" class="btn-close-modal disabled" onclick="closeHakoPopup()">USB REQUIRED</button>
+<div class="expert-hint">CTRL + CLICK TITLE FOR EXPERT MODE</div>
 </div>
 </div>
 
@@ -137,31 +136,44 @@ textarea { background:#000; color:#00ff41; border:1px solid #444;
 
 <div class="container">
 <div class="info-section">
-  <h2><i class="fas fa-info-circle"></i> PREVIEW SYSTEM ACTIVE</h2>
-  <p>Paste your HEX code below. The image will render automatically in the preview window.</p>
+  <h2><i class="fas fa-info-circle"></i> HOW TO CUSTOMIZE YOUR IMAGES</h2>
+  <ol>
+    <li><strong>Prepare:</strong> Download or create an image. Use <a href="https://www.photopea.com/" target="_blank" class="step-link">Photopea</a> to resize it (Square format 150x150 recommended).</li>
+    <li><strong>Remove Background:</strong> Go to <a href="https://www.remove.bg/" target="_blank" class="step-link">remove.bg</a> to clean your image background.</li>
+    <li><strong>Convert to Code:</strong> Use <a href="https://javl.github.io/image2cpp/" target="_blank" class="step-link">image2cpp</a> with these settings:
+      <ul>
+        <li><strong>Image Settings:</strong> Canvas size 150 x 150 | Background: <span style="color:var(--magenta)">Transparent</span></li>
+        <li><strong>Dithering:</strong> <span style="color:var(--magenta)">Atkinson</span></li>
+      </ul>
+    </li>
+    <li><strong>Export:</strong> Select <span style="color:var(--magenta)">"Arduino Code"</span>.</li>
+  </ol>
+  <div class="pro-tip">
+    <strong><i class="fas fa-lightbulb"></i> PRO TIP:</strong> Copy/Paste the HEX code. The preview will show you the result before injection!
+  </div>
 </div>
 
 <script>
-// Generation des 5 slots avec Canvas de preview
 for(let i=1;i<=5;i++){
 document.write(`
 <div class="slot-section">
-    <span class="slot-title">CONFIGURATION SLOT ${i}</span>
-    <div class="name-input-box">
-      <input type="text" id="n${i}" class="name-input" placeholder="SLOT ${i}" maxlength="15">
-    </div>
-    <div class="console-row">
-        <div class="code-box">
-            <label><i class="fas fa-image"></i> IMAGE A (NORMAL)</label>
-            <canvas id="prev_${i}_a" class="preview-canvas" width="150" height="150"></canvas>
-            <textarea id="c${i}_a" oninput="renderPreview('${i}_a')" placeholder="Paste HEX code here..."></textarea>
-        </div>
-        <div class="code-box">
-            <label><i class="fas fa-skull-crossbones"></i> IMAGE B (ATTACK)</label>
-            <canvas id="prev_${i}_b" class="preview-canvas" width="150" height="150"></canvas>
-            <textarea id="c${i}_b" oninput="renderPreview('${i}_b')" placeholder="Paste HEX code here..."></textarea>
-        </div>
-    </div>
+<span class="slot-title">CONFIGURATION SLOT ${i}</span>
+<div class="name-input-box">
+  <label style="color:var(--yellow); font-size:0.9rem; margin-bottom:8px;">SET CUSTOM NAME FOR THIS SLOT:</label>
+  <input type="text" id="n${i}" class="name-input" placeholder="SLOT ${i}" maxlength="15">
+</div>
+<div class="console-row">
+<div class="code-box">
+    <label><i class="fas fa-image"></i> IMAGE A (NORMAL)</label>
+    <canvas id="prev_${i}_a" class="preview-canvas" width="150" height="150"></canvas>
+    <textarea id="c${i}_a" oninput="renderPreview('${i}_a')" placeholder="Paste HEX code here..."></textarea>
+</div>
+<div class="code-box">
+    <label><i class="fas fa-skull-crossbones"></i> IMAGE B (ATTACK)</label>
+    <canvas id="prev_${i}_b" class="preview-canvas" width="150" height="150"></canvas>
+    <textarea id="c${i}_b" oninput="renderPreview('${i}_b')" placeholder="Paste HEX code here..."></textarea>
+</div>
+</div>
 </div>`);}
 </script>
 </div>
@@ -172,40 +184,27 @@ document.write(`
 </div>
 
 <script>
-/* ================= FONCTION DE RENDU D'IMAGE (LA CORRECTION) ================= */
+/* ================= LOGIQUE JS ET RENDU ================= */
 function renderPreview(slotId) {
     const textarea = document.getElementById('c' + slotId);
     const canvas = document.getElementById('prev_' + slotId);
     if (!textarea || !canvas) return;
-
     const ctx = canvas.getContext('2d');
     const hexData = textarea.value.match(/0x[0-9a-fA-F]{2}/g);
-
-    // Reset du canvas
     ctx.clearRect(0, 0, 150, 150);
-    ctx.fillStyle = "#00e5ff"; // On utilise le Cyan du site
-
-    if (!hexData || hexData.length < 100) return;
-
+    ctx.fillStyle = "#00e5ff"; 
+    if (!hexData) return;
     let x = 0, y = 0;
-    // On parcourt chaque octet trouvé
     hexData.forEach(hex => {
         let byte = parseInt(hex, 16);
-        // On parcourt les 8 bits de l'octet (MSB First)
         for (let bit = 7; bit >= 0; bit--) {
-            if ((byte >> bit) & 1) {
-                ctx.fillRect(x, y, 1, 1);
-            }
+            if ((byte >> bit) & 1) ctx.fillRect(x, y, 1, 1);
             x++;
-            if (x >= 150) { // Largeur max définie à 150
-                x = 0;
-                y++;
-            }
+            if (x >= 150) { x = 0; y++; }
         }
     });
 }
 
-/* ================= LOGIQUE SÉCURITÉ ET USB ================= */
 document.addEventListener('contextmenu', e => e.preventDefault());
 
 const popupUpdate = document.getElementById("popup-update");
@@ -214,9 +213,14 @@ const injectLog = document.getElementById("inject-log");
 const usbStatus = document.getElementById("usb-status");
 const enterBtn = document.getElementById("enter-btn");
 const siteLocker = document.getElementById("site-locker");
+const bootTitle = document.getElementById("boot-title");
 
 let usbConnected = false;
 let siteUnlocked = false;
+
+const bootLines = ["[BOOT] HAKO Sentinel v3.0","[INIT] Memory check .... OK","[INIT] Secure channel .. OK","[INIT] Serial interface .. WAIT","[INFO] Awaiting USB device..."];
+let bootIndex = 0;
+function boot(){ if(bootIndex<bootLines.length){ bootLog.textContent+=bootLines[bootIndex++]+"\n"; setTimeout(boot,600); } }
 
 async function detectUSB(){
   if(!("serial" in navigator)) return;
@@ -233,57 +237,47 @@ async function detectUSB(){
 }
 
 function closeHakoPopup(){ if(!usbConnected) return; popupUpdate.style.display="none"; siteUnlocked = true; }
+bootTitle.onclick = e => { if(e.ctrlKey) bootLog.textContent+="\n[EXPERT MODE ENABLED]\n"; };
 
-window.onload = () => { detectUSB(); navigator.serial.addEventListener("connect", detectUSB); navigator.serial.addEventListener("disconnect", detectUSB); };
+window.onload = ()=>{ boot(); detectUSB(); navigator.serial.addEventListener("connect", detectUSB); navigator.serial.addEventListener("disconnect", detectUSB); };
 
 function addLog(m){ injectLog.textContent += "> " + m + "\n"; injectLog.scrollTop = injectLog.scrollHeight; }
 
-/* ================= INJECTION SÉRIE ================= */
 async function sendAll() {
     const status = document.getElementById('status-msg');
     try {
         const port = await navigator.serial.requestPort();
         await port.open({ baudRate: 115200 });
-        
         document.getElementById('modal-inject').style.display = 'block';
         document.getElementById('finish-area').style.display = 'none';
         injectLog.textContent = "";
         addLog("STARTING INJECTION...");
-
         const writer = port.writable.getWriter();
         const encoder = new TextEncoder();
-
         for (let i = 1; i <= 5; i++) {
             const customName = document.getElementById(`n${i}`).value || `SLOT ${i}`;
             for (let f of ['a','b']) {
                 const textarea = document.getElementById(`c${i}_${f}`);
                 if(!textarea || textarea.value.length < 50) continue;
-
                 const fileName = `s${i}_${f}.bin`;
                 addLog(`TRANSFERT : ${fileName} (${customName})`);
-                
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
-                await new Promise(r => setTimeout(r, 500));
-
+                await new Promise(r => setTimeout(r, 800));
                 const matches = textarea.value.match(/0x[0-9a-fA-F]{2}/g);
                 if(matches){
                     for(let j = 0; j < matches.length; j++){
                         await writer.write(encoder.encode(matches[j]));
-                        if(j % 20 === 0) await new Promise(r => setTimeout(r, 2)); 
+                        if(j % 20 === 0) await new Promise(r => setTimeout(r, 1));
                     }
                     await writer.write(encoder.encode("\n"));
-                    addLog("OK.");
-                    await new Promise(r => setTimeout(r, 500));
+                    addLog("SYNC OK.");
                 }
             }
         }
-        addLog("ALL DATA INJECTED.");
+        addLog("INJECTION COMPLETE.");
         document.getElementById('finish-area').style.display = 'block';
-        writer.releaseLock(); 
-        await port.close();
-    } catch(e){ 
-        addLog("ERROR: " + e); 
-    }
+        writer.releaseLock(); await port.close();
+    } catch(e){ status.innerText = "ERROR: " + e; addLog("ERREUR: " + e); }
 }
 </script>
 </body>
