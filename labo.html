@@ -240,38 +240,40 @@ async function sendAll() {
             for (let f of ['a','b']) {
                 const textarea = document.getElementById(`c${i}_${f}`);
                 if(!textarea) continue;
-                const val = textarea.value;
-                if(val.length<50) continue;
+                
+                // Nettoyage : on retire les espaces et retours à la ligne avant traitement
+                const val = textarea.value.replace(/\s+/g, ''); 
+                if(val.length < 50) continue;
 
                 const fileName = `s${i}_${f}.bin`;
                 addLog(`TRANSFERT : ${fileName} (${customName})`);
                 
+                // Envoi de l'en-tête pour préparer l'Arduino
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
-                await new Promise(r=>setTimeout(r,1000));
+                await new Promise(r => setTimeout(r, 1000));
 
-               // --- VERSION CORRIGÉE POUR DISPLAY S3 ---
-                const matches = val.match(/0x[0-9a-fA-F]{4}/g); // On extrait uniquement les pixels 16-bit complets
+                // Extraction des pixels au format 16-bit (0xXXXX)
+                const matches = val.match(/0x[0-9a-fA-F]{4}/g); 
                 
                 if (matches) {
+                    addLog(`PIXELS DETECTES : ${matches.length}`);
                     for (let j = 0; j < matches.length; j++) {
-                        // On récupère les 4 caractères après le 0x (ex: ABCD)
-                        let rawHex = matches[j].replace('0x', '');
                         
-                        if (rawHex.length === 4) { 
-                            // IMPORTANT : On envoie le bloc complet "0xXXXX" 
-                            // pour que l'Arduino lise bien 4 caractères avec Serial.readBytes(hexStr, 4)
-                            await writer.write(encoder.encode("0x" + rawHex));
-                        }
+                        // Envoi propre du bloc complet "0xXXXX"
+                        await writer.write(encoder.encode(matches[j]));
                         
-                        // Gestion du buffer pour éviter les crashs sur l'ESP32 S3
-                        if (j % 40 === 0) {
-                            await new Promise(r => setTimeout(r, 4)); 
+                        // Pause de sécurité pour le LittleFS de l'ESP32 S3
+                        // On laisse respirer le processeur tous les 64 pixels
+                        if (j % 64 === 0) {
+                            await new Promise(r => setTimeout(r, 8)); 
                         }
                     }
                     
-                    await writer.write(encoder.encode("\n")); // Signal de fin de fichier
+                    // Signal de fin de fichier
+                    await writer.write(encoder.encode("\n"));
                     addLog("SYNC OK.");
-                    await new Promise(r => setTimeout(r, 1200)); 
+                    // Temps d'écriture final pour la Flash
+                    await new Promise(r => setTimeout(r, 1500)); 
                 }
             }
         }
