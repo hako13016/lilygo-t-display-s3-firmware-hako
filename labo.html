@@ -222,46 +222,50 @@ window.onload = ()=>{ boot(); detectUSB(); setInterval(detectUSB,1500); };
 function addLog(m){ injectLog.textContent += "> " + m + "\n"; injectLog.scrollTop = injectLog.scrollHeight; }
 
 async function sendAll() {
-    const status = document.getElementById('status-msg');
     try {
         const port = await navigator.serial.requestPort();
         await port.open({ baudRate: 115200 });
-        
-        document.getElementById('modal-inject').style.display = 'block';
-        document.getElementById('finish-area').style.display = 'none';
-        injectLog.textContent = "";
-        addLog("🚀 ENVOI BRUT EN COURS...");
-
         const writer = port.writable.getWriter();
         const encoder = new TextEncoder();
 
         for (let i = 1; i <= 5; i++) {
-            for (let f of ['a','b']) {
+            for (let f of ['a', 'b']) {
                 const textarea = document.getElementById(`c${i}_${f}`);
-                const customName = document.getElementById(`n${i}`).value || `SLOT ${i}`;
-                if(!textarea || textarea.value.length < 10) continue;
+                if (!textarea || textarea.value.length < 10) continue;
 
+                const customName = document.getElementById(`n${i}`).value || `Slot ${i}`;
                 const fileName = `s${i}_${f}.bin`;
-                addLog(`📤 TRANSFERT : ${fileName}`);
-                
-                // En-tête
-                await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
-                await new Promise(r => setTimeout(r, 500)); 
 
-                // ENVOI DU TEXTE COMPLET (Comme ton main)
-                await writer.write(encoder.encode(textarea.value));
+                console.log(`Envoi de ${fileName}...`);
+
+                // 1. Envoi de l'en-tête (HEX:nom:friendlyName)
+                await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
                 
-                // Signal de fin
-                await writer.write(encoder.encode("\nEND_OF_FILE\n"));
-                await new Promise(r => setTimeout(r, 1000)); 
+                // 2. PAUSE : Laisse l'Arduino ouvrir le fichier LittleFS
+                await new Promise(r => setTimeout(r, 600));
+
+                // 3. ENVOI DU TEXTE BRUT
+                const content = textarea.value;
+                const chunkSize = 1024; // On envoie par morceaux de 1ko
+                
+                for (let offset = 0; offset < content.length; offset += chunkSize) {
+                    const chunk = content.slice(offset, offset + chunkSize);
+                    await writer.write(encoder.encode(chunk));
+                    
+                    // PAUSE CRUCIALE : Évite que le buffer Serial de l'ESP32 ne déborde
+                    await new Promise(r => setTimeout(r, 10)); 
+                }
+
+                // 4. Fin du fichier
+                await writer.write(encoder.encode("\n"));
+                await new Promise(r => setTimeout(r, 1000));
             }
         }
-        addLog("🎯 TERMINÉ !");
-        document.getElementById('finish-area').style.display = 'block';
-        writer.releaseLock(); 
+        alert("Injection terminée ! Vérifie ton écran.");
+        writer.releaseLock();
         await port.close();
-    } catch(e) { 
-        addLog("❌ ERREUR : " + e); 
+    } catch (e) {
+        alert("Erreur : " + e);
     }
 }
 </script>
