@@ -241,10 +241,8 @@ async function sendAll() {
                 const textarea = document.getElementById(`c${i}_${f}`);
                 if(!textarea) continue;
                 
-                // --- LOGIQUE DE NETTOYAGE CRITIQUE ---
-                // On extrait UNIQUEMENT les pixels (ex: 0xFFFF)
-                // On ignore tout le reste : virgules, espaces, commentaires, PROGMEM...
                 const val = textarea.value;
+                // Extraction stricte des pixels 16-bit
                 const matches = val.match(/0x[0-9a-fA-F]{4}/g); 
                 
                 if (!matches || matches.length < 50) continue;
@@ -252,31 +250,34 @@ async function sendAll() {
                 const fileName = `s${i}_${f}.bin`;
                 addLog(`📤 TRANSFERT : ${fileName} (${customName})`);
                 
-                // Envoi de l'en-tête
+                // 1. On annonce le fichier
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
-                await new Promise(r => setTimeout(r, 800)); 
+                // On laisse l'Arduino créer le fichier (Pause plus longue ici)
+                await new Promise(r => setTimeout(r, 1000)); 
 
-                addLog(`📸 Pixels à transférer : ${matches.length}`);
+                addLog(`📸 Pixels détectés : ${matches.length}`);
 
                 for (let j = 0; j < matches.length; j++) {
-                    // On envoie le bloc pur "0xXXXX"
-                    // L'Arduino l'attend avec Serial.readBytes(hexStr, 4)
+                    // 2. Envoi du bloc 0xXXXX
                     await writer.write(encoder.encode(matches[j]));
                     
-                    // Pause de sécurité pour le LittleFS de l'ESP32 S3
-                    // (Le S3 écrit par blocs de 64 pixels pour éviter les erreurs)
-                    if (j % 64 === 0) {
-                        await new Promise(r => setTimeout(r, 4)); 
+                    // 3. LOGIQUE S3 : Pause tous les 32 pixels
+                    // Le buffer série du S3 fait souvent 64 ou 128 bytes. 
+                    // En s'arrêtant tous les 32 pixels, on évite l'overflow.
+                    if (j % 32 === 0) {
+                        await new Promise(r => setTimeout(r, 10)); 
                     }
                 }
                 
-                // Signal de fin pour ce fichier
+                // 4. Signal de fin de fichier
                 await writer.write(encoder.encode("\n"));
-                addLog(`✅ ${fileName} SYNCHRONISÉ.`);
-                await new Promise(r => setTimeout(r, 1000)); 
+                addLog(`✅ ${fileName} SAUVEGARDÉ.`);
+                
+                // On laisse l'Arduino fermer le fichier proprement
+                await new Promise(r => setTimeout(r, 1500)); 
             }
         }
-        addLog("🎯 INJECTION TERMINÉE !");
+        addLog("🎯 MISSION ACCOMPLIE !");
         document.getElementById('finish-area').style.display = 'block';
         status.innerText = "TRANSFER SUCCESSFUL!";
         writer.releaseLock(); 
