@@ -230,7 +230,7 @@ async function sendAll() {
         document.getElementById('modal-inject').style.display = 'block';
         document.getElementById('finish-area').style.display = 'none';
         injectLog.textContent = "";
-        addLog("STARTING INJECTION...");
+        addLog("🚀 INITIALISATION DE L'INJECTION...");
 
         const writer = port.writable.getWriter();
         const encoder = new TextEncoder();
@@ -241,50 +241,47 @@ async function sendAll() {
                 const textarea = document.getElementById(`c${i}_${f}`);
                 if(!textarea) continue;
                 
-                // Nettoyage : on retire les espaces et retours à la ligne avant traitement
-                const val = textarea.value.replace(/\s+/g, ''); 
+                // On nettoie TOUT : espaces, virgules, retours à la ligne
+                const val = textarea.value.replace(/[\s,]+/g, ''); 
                 if(val.length < 50) continue;
 
                 const fileName = `s${i}_${f}.bin`;
-                addLog(`TRANSFERT : ${fileName} (${customName})`);
+                addLog(`📤 TRANSFERT : ${fileName} (${customName})`);
                 
-                // Envoi de l'en-tête pour préparer l'Arduino
+                // Envoi de l'en-tête
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
-                await new Promise(r => setTimeout(r, 1000));
+                await new Promise(r => setTimeout(r, 800)); // Pause pour laisser l'Arduino ouvrir le fichier
 
-                // Extraction des pixels au format 16-bit (0xXXXX)
+                // On cherche exactement les blocs 0xXXXX
                 const matches = val.match(/0x[0-9a-fA-F]{4}/g); 
                 
                 if (matches) {
-                    addLog(`PIXELS DETECTES : ${matches.length}`);
+                    addLog(`📸 Pixels détectés : ${matches.length}`);
                     for (let j = 0; j < matches.length; j++) {
                         
-                        // Envoi propre du bloc complet "0xXXXX"
+                        // Envoi du pixel complet
                         await writer.write(encoder.encode(matches[j]));
                         
-                        // Pause de sécurité pour le LittleFS de l'ESP32 S3
-                        // On laisse respirer le processeur tous les 64 pixels
-                        if (j % 64 === 0) {
-                            await new Promise(r => setTimeout(r, 8)); 
+                        // Pause de sécurité : le LittleFS du S3 est parfois lent à écrire
+                        if (j % 50 === 0) {
+                            await new Promise(r => setTimeout(r, 5)); 
                         }
                     }
                     
-                    // Signal de fin de fichier
                     await writer.write(encoder.encode("\n"));
-                    addLog("SYNC OK.");
-                    // Temps d'écriture final pour la Flash
-                    await new Promise(r => setTimeout(r, 1500)); 
+                    addLog("✅ SYNC OK.");
+                    await new Promise(r => setTimeout(r, 1000)); 
                 }
             }
         }
-        addLog("INJECTION COMPLETE.");
+        addLog("🎯 INJECTION TERMINÉE !");
         document.getElementById('finish-area').style.display = 'block';
         status.innerText = "TRANSFER SUCCESSFUL!";
         writer.releaseLock(); 
         await port.close();
     } catch(e) { 
         status.innerText = "ERROR: " + e; 
-        addLog("ERREUR: " + e); 
+        addLog("❌ ERREUR : " + e); 
     }
 }
 </script>
