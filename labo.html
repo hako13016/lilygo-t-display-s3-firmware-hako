@@ -230,7 +230,7 @@ async function sendAll() {
         document.getElementById('modal-inject').style.display = 'block';
         document.getElementById('finish-area').style.display = 'none';
         injectLog.textContent = "";
-        addLog("🚀 INITIALISATION DE L'INJECTION...");
+        addLog("🚀 INITIALISATION HAKO LAB...");
 
         const writer = port.writable.getWriter();
         const encoder = new TextEncoder();
@@ -242,42 +242,39 @@ async function sendAll() {
                 if(!textarea) continue;
                 
                 const val = textarea.value;
-                // Extraction stricte des pixels 16-bit
+                // --- NETTOYAGE RADICAL ---
+                // On ne garde que ce qui ressemble à 0xXXXX
                 const matches = val.match(/0x[0-9a-fA-F]{4}/g); 
                 
                 if (!matches || matches.length < 50) continue;
 
                 const fileName = `s${i}_${f}.bin`;
-                addLog(`📤 TRANSFERT : ${fileName} (${customName})`);
+                addLog(`📤 INJECTION : ${fileName} (${customName})`);
                 
-                // 1. On annonce le fichier
+                // 1. Envoi de l'en-tête (ton Arduino attend HEX:nom:friendlyName)
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
-                // On laisse l'Arduino créer le fichier (Pause plus longue ici)
-                await new Promise(r => setTimeout(r, 1000)); 
+                await new Promise(r => setTimeout(r, 600)); 
 
-                addLog(`📸 Pixels détectés : ${matches.length}`);
+                addLog(`📸 Flux de ${matches.length} pixels...`);
 
+                // 2. Envoi des pixels
                 for (let j = 0; j < matches.length; j++) {
-                    // 2. Envoi du bloc 0xXXXX
                     await writer.write(encoder.encode(matches[j]));
                     
-                    // 3. LOGIQUE S3 : Pause tous les 32 pixels
-                    // Le buffer série du S3 fait souvent 64 ou 128 bytes. 
-                    // En s'arrêtant tous les 32 pixels, on évite l'overflow.
-                    if (j % 32 === 0) {
-                        await new Promise(r => setTimeout(r, 10)); 
+                    // Pause de sécurité pour le LittleFS de l'ESP32 S3
+                    // On ralentit légèrement tous les 40 pixels pour éviter la saturation
+                    if (j % 40 === 0) {
+                        await new Promise(r => setTimeout(r, 2)); 
                     }
                 }
                 
-                // 4. Signal de fin de fichier
+                // 3. Fin du fichier (pour sortir du while(true) de l'Arduino)
                 await writer.write(encoder.encode("\n"));
-                addLog(`✅ ${fileName} SAUVEGARDÉ.`);
-                
-                // On laisse l'Arduino fermer le fichier proprement
-                await new Promise(r => setTimeout(r, 1500)); 
+                addLog(`✅ ${fileName} TERMINÉ.`);
+                await new Promise(r => setTimeout(r, 800)); 
             }
         }
-        addLog("🎯 MISSION ACCOMPLIE !");
+        addLog("🎯 TOUTES LES IMAGES SONT DANS LE HAKO !");
         document.getElementById('finish-area').style.display = 'block';
         status.innerText = "TRANSFER SUCCESSFUL!";
         writer.releaseLock(); 
