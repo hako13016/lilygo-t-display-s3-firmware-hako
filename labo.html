@@ -241,36 +241,39 @@ async function sendAll() {
                 const textarea = document.getElementById(`c${i}_${f}`);
                 if(!textarea) continue;
                 
-                // On nettoie TOUT : espaces, virgules, retours à la ligne
-                const val = textarea.value.replace(/[\s,]+/g, ''); 
+                // NETTOYAGE RADICAL : On ne garde que l'hexadécimal et les 'x'
+                // Cela évite que les virgules ou les sauts de ligne ne décalent les couleurs
+                const val = textarea.value.replace(/[^0-9a-fA-Fx]/g, ''); 
                 if(val.length < 50) continue;
 
                 const fileName = `s${i}_${f}.bin`;
                 addLog(`📤 TRANSFERT : ${fileName} (${customName})`);
                 
-                // Envoi de l'en-tête
+                // Envoi de l'en-tête pour que l'Arduino prépare le LittleFS
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
-                await new Promise(r => setTimeout(r, 800)); // Pause pour laisser l'Arduino ouvrir le fichier
+                await new Promise(r => setTimeout(r, 800)); 
 
-                // On cherche exactement les blocs 0xXXXX
+                // On extrait précisément les blocs de 4 caractères (RGB565)
                 const matches = val.match(/0x[0-9a-fA-F]{4}/g); 
                 
                 if (matches) {
                     addLog(`📸 Pixels détectés : ${matches.length}`);
                     for (let j = 0; j < matches.length; j++) {
                         
-                        // Envoi du pixel complet
+                        // Envoi du pixel complet "0xXXXX"
+                        // L'Arduino lit 4 caractères après le "0x"
                         await writer.write(encoder.encode(matches[j]));
                         
-                        // Pause de sécurité : le LittleFS du S3 est parfois lent à écrire
-                        if (j % 50 === 0) {
+                        // Pause cruciale pour l'écriture Flash sur Display S3
+                        if (j % 64 === 0) {
                             await new Promise(r => setTimeout(r, 5)); 
                         }
                     }
                     
+                    // Fin du fichier
                     await writer.write(encoder.encode("\n"));
                     addLog("✅ SYNC OK.");
-                    await new Promise(r => setTimeout(r, 1000)); 
+                    await new Promise(r => setTimeout(r, 1200)); 
                 }
             }
         }
