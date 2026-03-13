@@ -230,57 +230,37 @@ async function sendAll() {
         document.getElementById('modal-inject').style.display = 'block';
         document.getElementById('finish-area').style.display = 'none';
         injectLog.textContent = "";
-        addLog("🚀 INITIALISATION HAKO LAB...");
+        addLog("🚀 ENVOI BRUT EN COURS...");
 
         const writer = port.writable.getWriter();
         const encoder = new TextEncoder();
 
         for (let i = 1; i <= 5; i++) {
-            const customName = document.getElementById(`n${i}`).value || `SLOT ${i}`;
             for (let f of ['a','b']) {
                 const textarea = document.getElementById(`c${i}_${f}`);
-                if(!textarea) continue;
-                
-                const val = textarea.value;
-                // --- NETTOYAGE RADICAL ---
-                // On ne garde que ce qui ressemble à 0xXXXX
-                const matches = val.match(/0x[0-9a-fA-F]{4}/g); 
-                
-                if (!matches || matches.length < 50) continue;
+                const customName = document.getElementById(`n${i}`).value || `SLOT ${i}`;
+                if(!textarea || textarea.value.length < 10) continue;
 
                 const fileName = `s${i}_${f}.bin`;
-                addLog(`📤 INJECTION : ${fileName} (${customName})`);
+                addLog(`📤 TRANSFERT : ${fileName}`);
                 
-                // 1. Envoi de l'en-tête (ton Arduino attend HEX:nom:friendlyName)
+                // En-tête
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
-                await new Promise(r => setTimeout(r, 600)); 
+                await new Promise(r => setTimeout(r, 500)); 
 
-                addLog(`📸 Flux de ${matches.length} pixels...`);
-
-                // 2. Envoi des pixels
-                for (let j = 0; j < matches.length; j++) {
-                    await writer.write(encoder.encode(matches[j]));
-                    
-                    // Pause de sécurité pour le LittleFS de l'ESP32 S3
-                    // On ralentit légèrement tous les 40 pixels pour éviter la saturation
-                    if (j % 40 === 0) {
-                        await new Promise(r => setTimeout(r, 2)); 
-                    }
-                }
+                // ENVOI DU TEXTE COMPLET (Comme ton main)
+                await writer.write(encoder.encode(textarea.value));
                 
-                // 3. Fin du fichier (pour sortir du while(true) de l'Arduino)
-                await writer.write(encoder.encode("\n"));
-                addLog(`✅ ${fileName} TERMINÉ.`);
-                await new Promise(r => setTimeout(r, 800)); 
+                // Signal de fin
+                await writer.write(encoder.encode("\nEND_OF_FILE\n"));
+                await new Promise(r => setTimeout(r, 1000)); 
             }
         }
-        addLog("🎯 TOUTES LES IMAGES SONT DANS LE HAKO !");
+        addLog("🎯 TERMINÉ !");
         document.getElementById('finish-area').style.display = 'block';
-        status.innerText = "TRANSFER SUCCESSFUL!";
         writer.releaseLock(); 
         await port.close();
     } catch(e) { 
-        status.innerText = "ERROR: " + e; 
         addLog("❌ ERREUR : " + e); 
     }
 }
