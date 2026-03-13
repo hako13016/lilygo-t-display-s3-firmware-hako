@@ -241,40 +241,39 @@ async function sendAll() {
                 const textarea = document.getElementById(`c${i}_${f}`);
                 if(!textarea) continue;
                 
-                // NETTOYAGE RADICAL : On ne garde que l'hexadécimal et les 'x'
-                // Cela évite que les virgules ou les sauts de ligne ne décalent les couleurs
-                const val = textarea.value.replace(/[^0-9a-fA-Fx]/g, ''); 
-                if(val.length < 50) continue;
+                // --- LOGIQUE DE NETTOYAGE CRITIQUE ---
+                // On extrait UNIQUEMENT les pixels (ex: 0xFFFF)
+                // On ignore tout le reste : virgules, espaces, commentaires, PROGMEM...
+                const val = textarea.value;
+                const matches = val.match(/0x[0-9a-fA-F]{4}/g); 
+                
+                if (!matches || matches.length < 50) continue;
 
                 const fileName = `s${i}_${f}.bin`;
                 addLog(`📤 TRANSFERT : ${fileName} (${customName})`);
                 
-                // Envoi de l'en-tête pour que l'Arduino prépare le LittleFS
+                // Envoi de l'en-tête
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
                 await new Promise(r => setTimeout(r, 800)); 
 
-                // On extrait précisément les blocs de 4 caractères (RGB565)
-                const matches = val.match(/0x[0-9a-fA-F]{4}/g); 
-                
-                if (matches) {
-                    addLog(`📸 Pixels détectés : ${matches.length}`);
-                    for (let j = 0; j < matches.length; j++) {
-                        
-                        // Envoi du pixel complet "0xXXXX"
-                        // L'Arduino lit 4 caractères après le "0x"
-                        await writer.write(encoder.encode(matches[j]));
-                        
-                        // Pause cruciale pour l'écriture Flash sur Display S3
-                        if (j % 64 === 0) {
-                            await new Promise(r => setTimeout(r, 5)); 
-                        }
-                    }
+                addLog(`📸 Pixels à transférer : ${matches.length}`);
+
+                for (let j = 0; j < matches.length; j++) {
+                    // On envoie le bloc pur "0xXXXX"
+                    // L'Arduino l'attend avec Serial.readBytes(hexStr, 4)
+                    await writer.write(encoder.encode(matches[j]));
                     
-                    // Fin du fichier
-                    await writer.write(encoder.encode("\n"));
-                    addLog("✅ SYNC OK.");
-                    await new Promise(r => setTimeout(r, 1200)); 
+                    // Pause de sécurité pour le LittleFS de l'ESP32 S3
+                    // (Le S3 écrit par blocs de 64 pixels pour éviter les erreurs)
+                    if (j % 64 === 0) {
+                        await new Promise(r => setTimeout(r, 4)); 
+                    }
                 }
+                
+                // Signal de fin pour ce fichier
+                await writer.write(encoder.encode("\n"));
+                addLog(`✅ ${fileName} SYNCHRONISÉ.`);
+                await new Promise(r => setTimeout(r, 1000)); 
             }
         }
         addLog("🎯 INJECTION TERMINÉE !");
