@@ -249,33 +249,41 @@ async function sendAll() {
                 await writer.write(encoder.encode(`HEX:${fileName}:${customName}\n`));
                 await new Promise(r=>setTimeout(r,1000));
 
-                // CORRECTION INJECTION COULEUR : On extrait bien les 0xXXXX (16-bit)
-                const matches=val.match(/0x[0-9a-fA-F]{2,4}/g);
-                if(matches){
-                  for(let j=0;j<matches.length;j++){
-                    let rawHex = matches[j].replace('0x', '');
-                    
-                    if (rawHex.length === 4) { 
-                        // Envoi propre du pixel 16 bits pour le Display S3
-                        await writer.write(encoder.encode("0x" + rawHex.substring(0, 2)));
-                        await writer.write(encoder.encode("0x" + rawHex.substring(2, 4)));
-                    } else {
-                        await writer.write(encoder.encode("0x" + rawHex));
+               // --- VERSION CORRIGÉE POUR DISPLAY S3 ---
+                const matches = val.match(/0x[0-9a-fA-F]{4}/g); // On extrait uniquement les pixels 16-bit complets
+                
+                if (matches) {
+                    for (let j = 0; j < matches.length; j++) {
+                        // On récupère les 4 caractères après le 0x (ex: ABCD)
+                        let rawHex = matches[j].replace('0x', '');
+                        
+                        if (rawHex.length === 4) { 
+                            // IMPORTANT : On envoie le bloc complet "0xXXXX" 
+                            // pour que l'Arduino lise bien 4 caractères avec Serial.readBytes(hexStr, 4)
+                            await writer.write(encoder.encode("0x" + rawHex));
+                        }
+                        
+                        // Gestion du buffer pour éviter les crashs sur l'ESP32 S3
+                        if (j % 40 === 0) {
+                            await new Promise(r => setTimeout(r, 4)); 
+                        }
                     }
                     
-                    if(j%20===0) await new Promise(r=>setTimeout(r,5));
-                  }
-                  await writer.write(encoder.encode("\n"));
-                  addLog("SYNC OK.");
-                  await new Promise(r=>setTimeout(r,1000));
+                    await writer.write(encoder.encode("\n")); // Signal de fin de fichier
+                    addLog("SYNC OK.");
+                    await new Promise(r => setTimeout(r, 1200)); 
                 }
             }
         }
         addLog("INJECTION COMPLETE.");
         document.getElementById('finish-area').style.display = 'block';
-        status.innerText="TRANSFER SUCCESSFUL!";
-        writer.releaseLock(); await port.close();
-    } catch(e){ status.innerText="ERROR: "+e; addLog("ERREUR: " + e); }
+        status.innerText = "TRANSFER SUCCESSFUL!";
+        writer.releaseLock(); 
+        await port.close();
+    } catch(e) { 
+        status.innerText = "ERROR: " + e; 
+        addLog("ERREUR: " + e); 
+    }
 }
 </script>
 </body>
